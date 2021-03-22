@@ -1,5 +1,10 @@
-import numpy as np
+
+from calFunction import maskObject
 import cv2
+import numpy as np
+from skimage import morphology
+# import sys
+# sys.path.append('./calFunction')
 
 homographyMatrix = np.array([
     [5.079053647431133e-06, -5.475219832828209e-04, 0.224511299503042],
@@ -14,38 +19,57 @@ virLightPosIMG = np.array(
 
 imgBg = cv2.imread('./sample-image/DSC_0332.JPG')
 imgSample = cv2.imread('./sample-image/DSC_0331.JPG')
-imContour = imgSample.copy()
+imgContour = np.zeros_like(imgSample)
 
 # pre-processing image procedure
-diffImage = cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY) - \
-    cv2.cvtColor(imgSample, cv2.COLOR_BGR2GRAY)
+diffImage = cv2.cvtColor(imgSample, cv2.COLOR_BGR2GRAY) - \
+    cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
+# diffImage_2 = cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY) - \
+#     cv2.cvtColor(imgSample, cv2.COLOR_BGR2GRAY)
 cv2.imshow("Subtract Image", diffImage)
-# medianFilt = cv2.medianBlur(diffImage, 5)
+# cv2.imshow("Subtract Image 2", diffImage_2)
+
+# medianFilt = cv2.medianBlur(diffImage, 9)
 # cv2.imshow("Median Filtering", medianFilt)
 
-# ret, diffImageBW = cv2.threshold(medianFilt, 10, 20, cv2.THRESH_BINARY)
-# cv2.imshow("Binary", diffImageBW)
 opening = cv2.morphologyEx(diffImage, cv2.MORPH_OPEN,
                            np.ones((16, 16), np.uint8))
+cv2.imshow("Morphology", opening)
 
-ret, diffImageBW = cv2.threshold(opening, 0, 200, cv2.THRESH_BINARY)
+ret, diffImageBW = cv2.threshold(opening, 10, 255, cv2.THRESH_BINARY)
 cv2.imshow("Binary", diffImageBW)
 
-# contours, hierarchy = cv2.findContours(
-#     diffImageBW, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+# Contour process for segment the object and shadow.
+contours, hierarchy = cv2.findContours(
+    diffImageBW, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-# if len(contours) != 0:
-#     # the contours are drawn here
-#     cv2.drawContours(imContour, contours, -1, 255, 3)
+if len(contours) != 0:
+    # find the biggest area of the contour
+    big_contour = max(contours, key=cv2.contourArea)
+    # draw filled contour on black background
+    mask = np.zeros_like(imgSample)
+    # mask[:, :] = (255, 0, 0)
+    cv2.drawContours(mask, [big_contour], 0, (255, 255, 255), -1)
+    cv2.imshow("Mask", mask)
 
-#     # find the biggest area of the contour
-#     c = max(contours, key=cv2.contourArea)
+    # apply mask to input image
+    # Create a green screen image (background color is used to seperated the object).
+    # ie. apple used green screen, mango used red screen.
+    greenScreenImage = cv2.bitwise_and(imgSample, mask)
+    cv2.imshow("Green Screen Masking Result", greenScreenImage)
 
-#     x, y, w, h = cv2.boundingRect(c)
-#     # draw the 'human' contour (in green)
-#     cv2.rectangle(imContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    # draw boundary box of objet
+    # x, y, w, h = cv2.boundingRect(big_contour)
+    # # draw the 'human' contour (in green)
+    # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
-# print(ret)
-cv2.imshow("Image Show", opening)
+
+# Object and shadow segmentation process
+# first, object segment from greenScreenImage
+hsvImage = maskObject.segmentObj(greenScreenImage)
+cv2.imshow("HSV Image", hsvImage)
+
+
+print("success")
 cv2.waitKey(0)
 cv2.destroyAllWindows()
