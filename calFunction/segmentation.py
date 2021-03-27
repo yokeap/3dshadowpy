@@ -41,6 +41,7 @@ def obj(imgSample, imgBin):
 
 def shadow(imgBin, imgObj):
     # fill holes by contour filling
+    cv2.imshow("Input Shadow Image", imgBin)
     imgShadow = cv2.bitwise_xor(imgBin, imgObj)
     imgShadow = cv2.erode(imgShadow, np.ones((16, 16), np.uint8), iterations=1)
     return imgShadow
