@@ -1,5 +1,5 @@
 
-from calFunction import segmentation
+from calFunction import segmentation, reconstruct
 from mpl_toolkits import mplot3d
 import cv2
 import numpy as np
@@ -25,81 +25,6 @@ virLightPosIMG = np.array(
     [2.907071993662571e+03, -2.682554285912778e+03, 2.164641969419283e+02])
 
 
-def homographyTransform(homographyMatrix, inputMatrix):
-    PR = np.multiply(homographyMatrix, inputMatrix)
-    newX = PR[0, 0]/PR[2, 0]
-    newY = PR[1, 0]/PR[2, 0]
-    worldUnit = [newX, newY]
-    return worldUnit
-
-
-def reconstruct(imgObjBin, imgShadowBin):
-    count = 0
-    # median filter was used to expand and fill some hole
-    # imgBin = cv2.blur(imgBin, (3, 3))
-    imgObjBin = cv2.medianBlur(imgObjBin, 9)
-    if debug == True:
-        cv2.imshow("Median Filtering", imgBin)
-    imgSkeleton = skeletonize(imgObjBin, method='lee')
-    height, width = imgObjBin.shape
-
-    # scan input binary image to detect the object edge
-    # variable declaration
-    edgeUpper = []
-    edgeUpperWorld = []
-    edgeLower = []
-    edgeLowerWorld = []
-    heightShadow = np.empty(height)
-    for x in range(width):
-        flag = 0
-        for y in range(height):
-            pixVal = imgObjBin.item(y, x)
-            # for upper edge
-            if flag == 0 and pixVal > 0:
-                flag = 1
-                # save x y coordinate with homogeneous coordiate (1)
-                edgeUpper.append(np.array([x, y, 1]))
-                # edgeUpper[count, 0] = x
-                # edgeUpper[count, 1] = y
-                # # add homogeneous coordinate
-                # edgeUpper[count, 2] = 1
-                edgeUpperWorld.append(homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]])))
-            if flag == 1 and pixVal < 255:
-                edgeLower.append(np.array([x, y, 1]))
-                # edgeLower[count, 0] = x
-                # edgeLower[count, 1] = y
-                # # add homogeneous coordinate
-                # edgeLower[count, 2] = 1
-                edgeLowerWorld.append(homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]])))
-
-                count = count + 1
-                # reset flag when found lower edge
-                flag = 0
-                break
-    print(edgeLower)
-    return np.array(edgeUpper), np.array(edgeLower)
-
-
-def skeleton(imgBin):
-    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    done = False
-    size = np.size(imgBin)
-    skel = np.zeros_like(imgBin)
-    while(not done):
-        eroded = cv2.erode(imgBin, element)
-        temp = cv2.dilate(eroded, element)
-        temp = cv2.subtract(imgBin, temp)
-        skel = cv2.bitwise_or(skel, temp)
-        imgBin = eroded.copy()
-
-        zeros = size - cv2.countNonZero(imgBin)
-        if zeros == size:
-            done = True
-    return skel
-
-
 imgBg = cv2.imread('./sample-image/bg.JPG')
 imgSample = cv2.imread('./sample-image/fish.JPG')
 height, width, channels = imgSample.shape
@@ -119,7 +44,7 @@ if debug == True:
 imgAnd = cv2.bitwise_and(diffImageBW, diffImage)
 if debug == True:
     cv2.imshow("Image And", imgAnd)
-ret, imgBin = cv2.threshold(imgAnd, 1, 255, cv2.THRESH_BINARY)
+ret, imgBin = cv2.threshold(imgAnd, 50, 255, cv2.THRESH_BINARY)
 imgOpening = cv2.morphologyEx(imgBin, cv2.MORPH_OPEN,
                               np.ones((5, 5), np.uint8))
 if debug == True:
@@ -127,25 +52,41 @@ if debug == True:
 
 imgObj = segmentation.obj(imgSample, diffImageBW)
 cv2.imshow("Object Image", imgObj)
-imgShadow = segmentation.shadow(imgBin, imgObj)
+# imgCentroid = segmentation.pseudoSkeleton(imgObj, imgSample)
+# cv2.imshow("Centroid Image", imgCentroid)
+imgShadow = segmentation.shadow(imgOpening, imgObj)
 cv2.imshow("Shadow Image", imgShadow)
 
-#
-imgObjEdgeLower, imgObjEdgeUpper = reconstruct(imgObj, imgShadow)
-fig = plot.figure()
-ax = plot.axes(projection='3d')
-print(imgObjEdgeUpper.shape)
-ax.plot(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
-        imgObjEdgeUpper[:, 2], label='Upper Edge')
-ax.plot(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
-        imgObjEdgeLower[:, 2], label='Lower Edge')
-ax.legend()
-plot.show()
+imgMerge = cv2.bitwise_or(imgObj, imgShadow)
+cv2.imshow("Image Merge", imgMerge)
 
+imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjLower = reconstruct.reconstruct(
+    imgObj, imgShadow, homographyMatrix)
 # cv2.imshow("Skeleton Image", imgObjEdgeUpper)
 
 
 end = time.time()
 print("processed time = ", (end - start), "s")
+
+# plot upper and lower edge in image coordinate
+fig1 = plot.figure()
+imageCoordinate = plot.axes(projection='3d')
+imageCoordinate.plot(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
+                     imgObjEdgeUpper[:, 2], label='Upper Edge')
+imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
+                     imgObjEdgeMiddle[:, 2], label='Middle Edge')
+imageCoordinate.plot(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
+                     imgObjEdgeLower[:, 2], label='Lower Edge')
+imageCoordinate.legend()
+# Upper and lower ege in world coordinate (in mm unit)
+fig2 = plot.figure()
+worldCoordinate = plot.axes(projection='3d')
+worldCoordinate.plot(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
+                     worldObjEdgeUpper[:, 2], label='Upper Edge')
+worldCoordinate.plot(worldObjLower[:, 0], worldObjLower[:, 1],
+                     worldObjLower[:, 2], label='Lower Edge')
+worldCoordinate.legend()
+plot.show()
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
