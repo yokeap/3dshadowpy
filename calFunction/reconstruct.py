@@ -1,77 +1,84 @@
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
+from . import mathTools
 from . import segmentation
 debug = True
-
-
-def homographyTransform(homographyMatrix, inputMatrix):
-    PR = np.multiply(homographyMatrix, inputMatrix)
-    newX = PR[0, 0]/PR[2, 0]
-    newY = PR[1, 0]/PR[2, 0]
-    worldUnit = [newX, newY, 0]
-    return worldUnit
-
 
 #   compute the position of 2-rays intersection
 # def rayintersect(originA, originB, unitVectorA, unitVectorB)
 
 #     return poisiton
 
-def reconstruct(imgObjBin, imgShadowBin, homographyMatrix):
+# Reconstruct 3D of Object from shadow,
+# height of object is calculated from range of shadow,
+# all of edges of images is transform to real world coordinate,
+# - finding pseudo skeleton (centroid) of object image
+# - detect edges by perform column scanning and transform to real world coordinate,
+# -
+
+
+def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, virlightPosIMG):
     count = 0
     # median filter was used to expand and fill some hole
     # imgBin = cv2.blur(imgBin, (3, 3))
     # imgSkeleton = skeletonize(imgObjBin, method='lee')
     imgSkeleton = segmentation.pseudoSkeleton(imgObjBin)
-    height, width = imgObjBin.shape
+    imgHeight, imgWidth = imgObjBin.shape
     if debug == True:
         cv2.imshow("Skeleton image", imgSkeleton)
 
-    # scan input binary image to detect the object edge
+    # scaning input binary image to detect the object edge
     # variable declaration
-    edgeUpper = []
-    edgeUpperWorld = []
+    edgeObjUpper = []
+    edgeObjUpperWorld = []
     edgeMiddle = []
     edgeMiddleWorld = []
     edgeLower = []
     edgeLowerWorld = []
-    heightShadow = np.empty(height)
+    heightShadow = np.empty(imgHeight)
     # scan for all (object: upper, middle and lower edge; shadow lower edge)
-    for x in range(width):
+    for x in range(imgWidth):
         flagUpperEdge = False
         flagMiddleEdge = False
         flagLowerEdge = False
         flagShadowEdge = False
-        for y in range(height):
+        for y in range(imgHeight):
             pixObjVal = imgObjBin.item(y, x)
             pixSkeletonVal = imgSkeleton.item(y, x)
             pixShadowVal = imgShadowBin.item(y, x)
-            # for upper edge
+            # upper edges
             if flagUpperEdge == False and pixObjVal > 0:
                 flagUpperEdge = True
-                # save x y coordinate with homogeneous coordiate (1)
-                edgeLower.append(np.array([x, y, 1]))
-                # edgeLowerWorld.append(np.append(homographyTransform(
-                #     homographyMatrix, np.array([[x], [y], [1]])), 0, axis=0))
-                edgeLowerWorld.append(homographyTransform(
+                # save x y coordinate with homogeneous coordiate
+                edgeObjUpper.append(np.array([x, y, 1]))
+                edgeObjUpperWorld.append(mathTools.homographyTransform(
                     homographyMatrix, np.array([[x], [y], [1]])))
-            # for middle of object (from skeleton image)
-            if flagUpperEdge == True and flagMiddleEdge == False and pixSkeletonVal > 0:
+            #  centroid edges (from skeleton image), then lower edges (object image) and then lower edges of shadow (max shadow distance)
+            if flagMiddleEdge == False and flagUpperEdge == True and pixSkeletonVal > 0:
                 flagMiddleEdge = True
                 edgeMiddle.append(np.array([x, y, 1]))
-                edgeMiddleWorld.append(homographyTransform(
+                edgeMiddleWorld.append(mathTools.homographyTransform(
                     homographyMatrix, np.array([[x], [y], [1]])))
-            # for lower edges
-            if flagUpperEdge == True and flagLowerEdge == False and pixObjVal < 255:
-                edgeUpper.append(np.array([x, y, 1]))
-                edgeUpperWorld.append(homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]])))
-                # reset flagUpperEdge when found lower edge
-                flagLowerEdge = True
-                break
+                # compute unit vector from centroid position (direction vector related with virtual light position)
+                centroid2LightUnitVector = mathTools.unitVector2D(
+                    [x, y], virlightPosIMG[0:1])
+                # scanning to find the maximum shadow distance (shadow lowest edge) with respect with centroid
+                # using unit vector for direction reference then interpolate from centroid position until found the maximum shadow edge
+                for s in range(y, imgHeight):
+                    posShadow = np.array(
+                        [[x], [y]]) + (s*centroid2LightUnitVector)
 
-    return np.array(edgeUpper), np.array(edgeMiddle), np.array(edgeLower), np.array(edgeUpperWorld), np.array(edgeLowerWorld)
+            # # for lower edges
+            # if flagLowerEdge == False and flagUpperEdge == True and pixObjVal < 255:
+            #     flagLowerEdge = True
+            #     edgeObjUpper.append(np.array([x, y, 1]))
+            #     edgeObjUpperWorld.append(mathTools.homographyTransform(
+            #         homographyMatrix, np.array([[x], [y], [1]])))
+            #     # reset flagUpperEdge when found lower edge
+            #     break
+
+    return np.array(edgeObjUpper), np.array(edgeMiddle), np.array(edgeLower), np.array(edgeObjUpperWorld), np.array(edgeLowerWorld)
 
 
 def skeleton(imgBin):

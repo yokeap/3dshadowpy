@@ -61,9 +61,8 @@ imgMerge = cv2.bitwise_or(imgObj, imgShadow)
 cv2.imshow("Image Merge", imgMerge)
 
 imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjLower = reconstruct.reconstruct(
-    imgObj, imgShadow, homographyMatrix)
+    imgObj, imgShadow, homographyMatrix, virLightPosIMG)
 # cv2.imshow("Skeleton Image", imgObjEdgeUpper)
-
 
 end = time.time()
 print("processed time = ", (end - start), "s")
@@ -78,6 +77,7 @@ imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
 imageCoordinate.plot(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
                      imgObjEdgeLower[:, 2], label='Lower Edge')
 imageCoordinate.legend()
+
 # Upper and lower ege in world coordinate (in mm unit)
 fig2 = plot.figure()
 worldCoordinate = plot.axes(projection='3d')
