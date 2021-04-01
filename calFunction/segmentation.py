@@ -5,22 +5,23 @@ from . import mathTools
 
 debug = False
 
+
 def draw_angled_rec(x0, y0, width, height, angle, img):
 
     _angle = math.radians(90-angle)
     b = math.cos(_angle) * 0.5
     a = math.sin(_angle) * 0.5
-    pt0 = (int(x0 - a * height - b * width),
-           int(y0 + b * height - a * width))
-    pt1 = (int(x0 + a * height - b * width),
-           int(y0 - b * height - a * width))
-    pt2 = (int(2 * x0 - pt0[0]), int(2 * y0 - pt0[1]))
-    pt3 = (int(2 * x0 - pt1[0]), int(2 * y0 - pt1[1]))
+    posOrigin = (int(x0 - a * height - b * width),
+                 int(y0 + b * height - a * width))
+    posDestination = (int(x0 + a * height - b * width),
+                      int(y0 - b * height - a * width))
+    pt2 = (int(2 * x0 - posOrigin[0]), int(2 * y0 - posOrigin[1]))
+    pt3 = (int(2 * x0 - posDestination[0]), int(2 * y0 - posDestination[1]))
 
-    cv2.line(img, pt0, pt1, (0, 0, 255), 1)
-    cv2.line(img, pt1, pt2, (0, 0, 255), 1)
+    cv2.line(img, posOrigin, posDestination, (0, 0, 255), 1)
+    cv2.line(img, posDestination, pt2, (0, 0, 255), 1)
     cv2.line(img, pt2, pt3, (0, 0, 255), 1)
-    cv2.line(img, pt3, pt0, (0, 0, 255), 1)
+    cv2.line(img, pt3, posOrigin, (0, 0, 255), 1)
     return img
 
 
@@ -120,7 +121,7 @@ def pseudoSkeleton(imgObj):
         M = cv2.moments(big_contour)
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])
-        #cv2.circle(imgOriginal, (cx, cy), 5, (255, 0, 0), -1)
+        # cv2.circle(imgOriginal, (cx, cy), 5, (255, 0, 0), -1)
 
         ellipse = cv2.fitEllipse(big_contour)
         rect = cv2.minAreaRect(big_contour)
@@ -158,8 +159,11 @@ def pseudoSkeleton(imgObj):
         # imgOriginal = draw_angled_rec(
         #     rect[0][0], rect[0][1], rect[1][1], rect[1][0], rect[2], imgOriginal)
 
-        pt0 = (int(rectHalfVerticesLeftX), int(rectHalfVerticesLeftY))
-        pt1 = (int(rectHalfVerticesRightX), int(rectHalfVerticesRightY))
-        imgPseudoSkel = cv2.line(imgPseudoSkel, pt0, pt1, (255), 1)
+        posOrigin = [rectHalfVerticesLeftX, rectHalfVerticesLeftY]
+        posDestination = [rectHalfVerticesRightX, rectHalfVerticesRightY]
+        pos_1 = (int(rectHalfVerticesLeftX), int(rectHalfVerticesLeftY))
+        pos_2 = (int(rectHalfVerticesRightX), int(rectHalfVerticesRightY))
+        imgPseudoSkel = cv2.line(
+            imgPseudoSkel, pos_1, pos_2, (255), 1)
 
-    return imgPseudoSkel
+    return posOrigin, posDestination, imgPseudoSkel

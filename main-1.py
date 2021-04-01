@@ -60,7 +60,7 @@ cv2.imshow("Shadow Image", imgShadow)
 imgMerge = cv2.bitwise_or(imgObj, imgShadow)
 cv2.imshow("Image Merge", imgMerge)
 
-imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjLower = reconstruct.reconstruct(
+imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower = reconstruct.reconstruct(
     imgObj, imgShadow, homographyMatrix, virLightPosIMG)
 # cv2.imshow("Skeleton Image", imgObjEdgeUpper)
 
@@ -72,10 +72,11 @@ fig1 = plot.figure()
 imageCoordinate = plot.axes(projection='3d')
 imageCoordinate.plot(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
                      imgObjEdgeUpper[:, 2], label='Upper Edge')
-imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
-                     imgObjEdgeMiddle[:, 2], label='Middle Edge')
+# imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
+#                      imgObjEdgeMiddle[:, 2], label='Middle Edge')
 imageCoordinate.plot(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
                      imgObjEdgeLower[:, 2], label='Lower Edge')
+
 imageCoordinate.legend()
 
 # Upper and lower ege in world coordinate (in mm unit)
@@ -83,8 +84,10 @@ fig2 = plot.figure()
 worldCoordinate = plot.axes(projection='3d')
 worldCoordinate.plot(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
                      worldObjEdgeUpper[:, 2], label='Upper Edge')
-worldCoordinate.plot(worldObjLower[:, 0], worldObjLower[:, 1],
-                     worldObjLower[:, 2], label='Lower Edge')
+# worldCoordinate.plot(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
+#                      worldObjEdgeMiddle[:, 2], label='Upper Edge')
+worldCoordinate.plot(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
+                     worldObjEdgeLower[:, 2], label='Lower Edge')
 worldCoordinate.legend()
 plot.show()
 
