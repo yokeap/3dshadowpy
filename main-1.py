@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import time
 # import sys
 # sys.path.append('./calFunction')
-debug = True
+debug = False
 
 # start timer
 start = time.time()
@@ -25,8 +25,8 @@ virLightPosIMG = np.array(
     [2.907071993662571e+03, -2.682554285912778e+03, 2.164641969419283e+02])
 
 
-imgBg = cv2.imread('./sample-image/bg.JPG')
-imgSample = cv2.imread('./sample-image/fish.JPG')
+imgBg = cv2.imread('./sample-image/bg-1.JPG')
+imgSample = cv2.imread('./sample-image/fish-1.JPG')
 height, width, channels = imgSample.shape
 imgBlack = np.zeros([height, width, 1], dtype=np.uint8)
 imgContour = np.zeros_like(imgSample)
@@ -46,7 +46,7 @@ if debug == True:
     cv2.imshow("Image And", imgAnd)
 ret, imgBin = cv2.threshold(imgAnd, 50, 255, cv2.THRESH_BINARY)
 imgOpening = cv2.morphologyEx(imgBin, cv2.MORPH_OPEN,
-                              np.ones((5, 5), np.uint8))
+                              np.ones((15, 15), np.uint8))
 if debug == True:
     cv2.imshow("Morphology", imgOpening)
 
@@ -60,9 +60,8 @@ cv2.imshow("Shadow Image", imgShadow)
 imgMerge = cv2.bitwise_or(imgObj, imgShadow)
 cv2.imshow("Image Merge", imgMerge)
 
-imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower = reconstruct.reconstruct(
+imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower, imgShadowEdgesLower, imgShadowEdgesUpper, worldShadowEdgesLower, worldShadowEdgesUpper = reconstruct.reconstruct(
     imgObj, imgShadow, homographyMatrix, virLightPosIMG)
-# cv2.imshow("Skeleton Image", imgObjEdgeUpper)
 
 end = time.time()
 print("processed time = ", (end - start), "s")
@@ -72,11 +71,14 @@ fig1 = plot.figure()
 imageCoordinate = plot.axes(projection='3d')
 imageCoordinate.plot(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
                      imgObjEdgeUpper[:, 2], label='Upper Edge')
-# imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
-#                      imgObjEdgeMiddle[:, 2], label='Middle Edge')
+imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
+                     imgObjEdgeMiddle[:, 2], label='Middle Edge')
 imageCoordinate.plot(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
                      imgObjEdgeLower[:, 2], label='Lower Edge')
-
+imageCoordinate.plot(imgShadowEdgesLower[:, 0], imgShadowEdgesLower[:, 1],
+                     imgShadowEdgesLower[:, 2], label='Shadow Lower Edge')
+imageCoordinate.plot(imgShadowEdgesUpper[:, 0], imgShadowEdgesUpper[:, 1],
+                     imgShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
 imageCoordinate.legend()
 
 # Upper and lower ege in world coordinate (in mm unit)
@@ -84,10 +86,14 @@ fig2 = plot.figure()
 worldCoordinate = plot.axes(projection='3d')
 worldCoordinate.plot(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
                      worldObjEdgeUpper[:, 2], label='Upper Edge')
-# worldCoordinate.plot(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
-#                      worldObjEdgeMiddle[:, 2], label='Upper Edge')
+worldCoordinate.plot(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
+                     worldObjEdgeMiddle[:, 2], label='Middle Edge')
 worldCoordinate.plot(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
                      worldObjEdgeLower[:, 2], label='Lower Edge')
+worldCoordinate.plot(worldShadowEdgesLower[:, 0], worldShadowEdgesLower[:, 1],
+                     worldShadowEdgesLower[:, 2], label='Shadow Lower Edge')
+worldCoordinate.plot(worldShadowEdgesUpper[:, 0], worldShadowEdgesUpper[:, 1],
+                     worldShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
 worldCoordinate.legend()
 plot.show()
 

@@ -73,19 +73,24 @@ def obj(imgSample, imgBin):
 
 
 def shadow(imgBin, imgObj):
+    imgOut = np.zeros_like(imgObj)
     # morphology a little bit to imgObj
     cv2.imshow("Input Shadow Image", imgBin)
     imgShadow = cv2.bitwise_xor(imgBin, imgObj)
+    # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
+    #                              np.ones((15, 15), np.uint8))
+    cv2.imshow("EX OR", imgShadow)
+
     # imgShadow = cv2.erode(imgShadow, np.ones((16, 16), np.uint8), iterations=1)
     contours, hierarchy = cv2.findContours(
         imgShadow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
-        cv2.drawContours(imgShadow, [big_contour], 0, 255, -1)
-        imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
-                                     np.ones((5, 5), np.uint8))
-    return imgShadow
+        cv2.drawContours(imgOut, [big_contour], 0, 255, -1)
+        # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
+        #                              np.ones((15, 15), np.uint8))
+    return imgOut
 
 
 def maskObj(img):
