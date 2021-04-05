@@ -2,6 +2,13 @@ import numpy as np
 import math
 
 
+def magnitudeCompute3D(origin, destination):
+    origin = np.array(origin)
+    destination = np.array(destination)
+    diffVect = origin - destination
+    return math.sqrt((diffVect[0] * diffVect[0]) + (diffVect[1] * diffVect[1]) + (diffVect[2] * diffVect[2]))
+
+
 def unitVector2D(origin, dest):
     l1 = np.array([origin[0] - dest[0], origin[1] - dest[1]])
     magnitude = math.sqrt((l1[0] * l1[0]) + (l1[1] * l1[1]))
@@ -38,3 +45,25 @@ def rayintersect(origin1, origin2, unitVect1, unitVect2):
     position = (origin1 + (s*unitVect1)) + (origin2 + (t*unitVect2))
     position = position/2
     return np.array(position)
+
+
+def calHeightFromShadow(posShadowUpperImg, posCentroidImg, posShadowUpperWorld, posCentroidWorld, posVirlightWorld):
+    posShadowUpperImg = np.array(posCentroidImg)
+    posCentroidImg = np.array(posCentroidImg)
+    posShadowUpperWorld = np.array(posShadowUpperWorld)
+    posCentroidWorld = np.array(posCentroidWorld)
+    posVirlightWorld = np.array(posVirlightWorld)
+    diffPosShadowImg = posShadowUpperImg - posCentroidImg
+    diffPosShadowWorld = posShadowUpperWorld - posCentroidWorld
+    shadowRange = math.sqrt((diffPosShadowWorld[0] * diffPosShadowWorld[0]) + (
+        diffPosShadowWorld[1] * diffPosShadowWorld[1]))
+    # compute base length from shadow edge and virtual light source (in world coordinate)
+    uLength = magnitudeCompute3D(posShadowUpperWorld, posVirlightWorld)
+    vLength = magnitudeCompute3D(
+        np.append(posVirlightWorld[0:2], [0], axis=0), posVirlightWorld)
+    wLength = magnitudeCompute3D(
+        posShadowUpperWorld, np.append(posVirlightWorld[0:2], [0], axis=0))
+    angle = math.acos(((uLength ** 2) + (wLength ** 2) -
+                       (vLength ** 2)) / (2 * uLength * wLength))
+    skeletonHeight = shadowRange * angle
+    return skeletonHeight
