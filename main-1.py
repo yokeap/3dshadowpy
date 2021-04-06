@@ -64,51 +64,57 @@ imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjE
     imgObj, imgShadow, homographyMatrix, virLightPosIMG, virLightPos)
 
 end = time.time()
-# a = np.empty(imgShadowEdgesUpper.shape[0])
-# a.fill(virLightPos[0])
-# a = a.reshape(a.shape[0], 1)
-xOrigin = np.empty(imgShadowEdgesUpper.shape[0])
-xOrigin.fill(virLightPos[0])
-xOrigin = xOrigin.reshape(xOrigin.shape[0], 1)
-# testArray = np.array([np.transpose([imgShadowEdgesUpper[:, 0]]), a])
 print("processed time = ", (end - start), "s")
 
 # plot upper and lower edge in image coordinate
 fig1 = plot.figure()
 imageCoordinate = plot.axes(projection='3d')
-imageCoordinate.plot(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
-                     imgObjEdgeUpper[:, 2], label='Upper Edge')
-imageCoordinate.plot(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
-                     imgObjEdgeMiddle[:, 2], label='Middle Edge')
-imageCoordinate.plot(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
-                     imgObjEdgeLower[:, 2], label='Lower Edge')
-imageCoordinate.plot(imgShadowEdgesLower[:, 0], imgShadowEdgesLower[:, 1],
-                     imgShadowEdgesLower[:, 2], label='Shadow Lower Edge')
-imageCoordinate.plot(imgShadowEdgesUpper[:, 0], imgShadowEdgesUpper[:, 1],
-                     imgShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
+
+imageCoordinate.scatter(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
+                        imgObjEdgeUpper[:, 2], s=[0.1], label='Upper Edge')
+imageCoordinate.scatter(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
+                        imgObjEdgeMiddle[:, 2], s=[0.1], label='Middle Edge')
+imageCoordinate.scatter(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
+                        imgObjEdgeLower[:, 2], s=[0.1], label='Lower Edge')
+imageCoordinate.scatter(imgShadowEdgesLower[:, 0], imgShadowEdgesLower[:, 1],
+                        imgShadowEdgesLower[:, 2], s=[0.1], label='Shadow Lower Edge')
+imageCoordinate.scatter(imgShadowEdgesUpper[:, 0], imgShadowEdgesUpper[:, 1],
+                        imgShadowEdgesUpper[:, 2], s=[0.1], label='Shadow Upper Edge')
 # draw line from virtual light source position to head and tail shadow position
 # shadow head
-imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[0, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[0, 1]],
-                     [virLightPosIMG[2], imgShadowEdgesUpper[0, 2]])
-# shadow tail
-imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 1]],
-                     [virLightPosIMG[2], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 2]])
+for i in range(0, imgShadowEdgesUpper.shape[0], 100):
+    imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[i, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[i, 1]],
+                         [virLightPosIMG[2], imgShadowEdgesUpper[i, 2]])
+# # shadow tail
+# imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 1]],
+#                      [virLightPosIMG[2], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 2]])
+imageCoordinate.set_xlabel('x (Pixels)')
+imageCoordinate.set_ylabel('y (Pixels)')
+imageCoordinate.set_zlabel('z (mm)')
 imageCoordinate.legend()
 
-# # Upper and lower ege in world coordinate (in mm unit)
-# fig2 = plot.figure()
-# worldCoordinate = plot.axes(projection='3d')
-# worldCoordinate.plot(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
-#                      worldObjEdgeUpper[:, 2], label='Upper Edge')
-# worldCoordinate.plot(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
-#                      worldObjEdgeMiddle[:, 2], label='Middle Edge')
-# worldCoordinate.plot(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
-#                      worldObjEdgeLower[:, 2], label='Lower Edge')
-# worldCoordinate.plot(worldShadowEdgesLower[:, 0], worldShadowEdgesLower[:, 1],
-#                      worldShadowEdgesLower[:, 2], label='Shadow Lower Edge')
-# worldCoordinate.plot(worldShadowEdgesUpper[:, 0], worldShadowEdgesUpper[:, 1],
-#                      worldShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
-# worldCoordinate.legend()
+# Upper and lower ege in world coordinate (in mm unit)
+fig2 = plot.figure()
+worldCoordinate = plot.axes(projection='3d')
+worldCoordinate.scatter(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
+                        worldObjEdgeUpper[:, 2], label='Upper Edge')
+worldCoordinate.scatter(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
+                        worldObjEdgeMiddle[:, 2], label='Middle Edge')
+worldCoordinate.scatter(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
+                        worldObjEdgeLower[:, 2], label='Lower Edge')
+worldCoordinate.scatter(worldShadowEdgesLower[:, 0], worldShadowEdgesLower[:, 1],
+                        worldShadowEdgesLower[:, 2], label='Shadow Lower Edge')
+worldCoordinate.scatter(worldShadowEdgesUpper[:, 0], worldShadowEdgesUpper[:, 1],
+                        worldShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
+# draw line from virtual light source position to head and tail shadow position
+# shadow head
+for i in range(0, imgShadowEdgesUpper.shape[0], 100):
+    worldCoordinate.plot([virLightPos[0], worldShadowEdgesUpper[i, 0]], [virLightPos[1], worldShadowEdgesUpper[i, 1]],
+                         [virLightPos[2], worldShadowEdgesUpper[i, 2]])
+worldCoordinate.set_xlabel('x (mm)')
+worldCoordinate.set_ylabel('y (mm)')
+worldCoordinate.set_zlabel('z (mm)')
+worldCoordinate.legend()
 plot.show()
 
 cv2.waitKey(0)

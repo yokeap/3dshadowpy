@@ -16,10 +16,13 @@ def unitVector2D(origin, dest):
 
 
 def homographyTransform(homographyMatrix, inputMatrix):
-    PR = np.multiply(homographyMatrix, inputMatrix)
-    newX = PR[0, 0]/PR[2, 0]
-    newY = PR[1, 0]/PR[2, 0]
-    worldUnit = [newX, newY, 0]
+    homographyMatrix = np.array(homographyMatrix)
+    inputMatrix = np.array(inputMatrix)
+    PR = np.matmul(homographyMatrix, inputMatrix)
+    newX = PR[0]/PR[2]
+    newY = PR[1]/PR[2]
+    # worldUnit = np.array([[newX], [newY], [0]])
+    worldUnit = np.array([newX, newY, 0], dtype=object)
     return worldUnit
 
 # compute the position of 2-rays intersection
@@ -53,16 +56,16 @@ def calHeightFromShadow(posShadowUpperImg, posCentroidImg, posShadowUpperWorld, 
     posShadowUpperWorld = np.array(posShadowUpperWorld)
     posCentroidWorld = np.array(posCentroidWorld)
     posVirlightWorld = np.array(posVirlightWorld)
-    diffPosShadowImg = posShadowUpperImg - posCentroidImg
-    diffPosShadowWorld = posShadowUpperWorld - posCentroidWorld
+    diffPosShadowImg = posCentroidImg - posShadowUpperImg
+    diffPosShadowWorld = posCentroidWorld - posShadowUpperWorld
     shadowRange = math.sqrt((diffPosShadowWorld[0] * diffPosShadowWorld[0]) + (
         diffPosShadowWorld[1] * diffPosShadowWorld[1]))
     # compute base length from shadow edge and virtual light source (in world coordinate)
     uLength = magnitudeCompute3D(posShadowUpperWorld, posVirlightWorld)
     vLength = magnitudeCompute3D(
-        np.append(posVirlightWorld[0:2], [0], axis=0), posVirlightWorld)
+        [posVirlightWorld[0], posVirlightWorld[1], 0], posVirlightWorld)
     wLength = magnitudeCompute3D(
-        posShadowUpperWorld, np.append(posVirlightWorld[0:2], [0], axis=0))
+        posShadowUpperWorld, [posVirlightWorld[0], posVirlightWorld[1], 0])
     angle = math.acos(((uLength ** 2) + (wLength ** 2) -
                        (vLength ** 2)) / (2 * uLength * wLength))
     skeletonHeight = shadowRange * angle

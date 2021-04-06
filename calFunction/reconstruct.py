@@ -20,6 +20,7 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
     imgSkeleton = skeletonize(imgObjBin, method='lee')
     # imgSkeleton = cv2.dilate(imgSkeleton, np.ones(
     #     (3, 3), np.uint8), iterations=3)
+    # imgSkeleton = skeleton(imgObjBin)
     # posImgSkeletonOrigin, posImgSkeletonDestination, imgSkeleton = segmentation.pseudoSkeleton(
     #     imgObjBin)
     imgHeight, imgWidth = imgObjBin.shape
@@ -82,7 +83,7 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
                     if(posSampling[0] > imgWidth):
                         posSampling[0] = imgWidth - 1
                     if(posSampling[1] > imgHeight):
-                        posSampling[1] = imgHeight - 1
+                        break
                     # append homogeneous coordinate
                     posSamplingHomo = [posSampling[0], posSampling[1], 1.0]
                     if flagShadowLowerEdge == False and imgShadowBin.item(int(posSampling[1]), int(posSampling[0])) > 0:
