@@ -15,9 +15,12 @@ def unitVector2D(origin, dest):
     return np.array([l1[0]/magnitude, l1[1]/magnitude])
 
 
-def homographyTransform(homographyMatrix, inputMatrix):
+def homographyTransform(homographyMatrix, inputMatrix, scale):
+    scale = 1 / scale
     homographyMatrix = np.array(homographyMatrix)
-    inputMatrix = np.array(inputMatrix)
+    # inputMatrix = np.array(inputMatrix)
+    inputMatrix = np.array(
+        [[inputMatrix[0] * scale], [inputMatrix[1] * scale], [1]])
     PR = np.matmul(homographyMatrix, inputMatrix)
     newX = PR[0]/PR[2]
     newY = PR[1]/PR[2]

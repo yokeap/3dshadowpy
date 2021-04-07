@@ -13,6 +13,8 @@ debug = False
 # start timer
 start = time.time()
 
+scale = 0.2  # percent of original size
+
 homographyMatrix = np.array([
     [5.079053647431133e-06, -5.475219832828209e-04, 0.224511299503042],
     [- 5.494275672572568e-04, -1.011837140387550e-06, 0.974457649498132],
@@ -25,9 +27,19 @@ virLightPosIMG = np.array(
     [2.907071993662571e+03, -2.682554285912778e+03, 2.164641969419283e+02])
 
 
+# homographyMatrix = homographyMatrix * scale
+
+# virLightPos = virLightPos * scale
+virLightPosIMG = virLightPosIMG * scale
+
 imgBg = cv2.imread('./sample-image/bg-1.JPG')
 imgSample = cv2.imread('./sample-image/fish-1.JPG')
+
 height, width, channels = imgSample.shape
+height = int(height * scale)
+width = int(width * scale)
+imgBg = cv2.resize(imgBg, (width, height))
+imgSample = cv2.resize(imgSample, (width, height))
 imgBlack = np.zeros([height, width, 1], dtype=np.uint8)
 imgContour = np.zeros_like(imgSample)
 

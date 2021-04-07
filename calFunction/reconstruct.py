@@ -60,13 +60,13 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
                 # save x y coordinate with homogeneous coordiate
                 edgeObjUpper.append(np.array([x, y, 1]))
                 edgeObjUpperWorld.append(mathTools.homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]])))
+                    homographyMatrix, np.array([[x], [y], [1]]), 0.2))
                 # #  centroid edges (from skeleton image), then lower edges (object image) and then lower edges of shadow (max shadow distance)
             if flagObjMiddleEdge == False and flagObjUpperEdge == True and pixSkeletonVal > 0:
                 flagObjMiddleEdge = True
                 posCentroid = np.array([x, y, 1])
                 posCentroidWorld = mathTools.homographyTransform(
-                    homographyMatrix, posCentroid)
+                    homographyMatrix, posCentroid, 0.2)
                 edgeObjMiddle.append(posCentroid)
                 edgeObjMiddleWorld.append(posCentroidWorld)
                 # compute unit vector from centroid position (direction vector related with virtual light position)
@@ -90,14 +90,14 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
                         flagShadowLowerEdge = True
                         posShadowLower = np.array(posSamplingHomo)
                         posShadowLowerWorld = mathTools.homographyTransform(
-                            homographyMatrix, np.array([[posSampling[0]], [posSampling[1]], [1]]))
+                            homographyMatrix, np.array([[posSampling[0]], [posSampling[1]], [1]]), 0.2)
                         edgesShadowLower.append(posShadowLower)
                         edgesShadowLowerWorld.append(posShadowLowerWorld)
                     if flagShadowLowerEdge == True and flagShadowUpperEdge == False and imgShadowBin.item(int(posSampling[1]), int(posSampling[0])) < 1:
                         flagShadowUpperEdge = True
                         posShadowUpper = np.array(posSamplingHomo)
                         posShadowUpperWorld = mathTools.homographyTransform(
-                            homographyMatrix, np.array([[posSampling[0]], [posSampling[1]], [1]]))
+                            homographyMatrix, np.array([[posSampling[0]], [posSampling[1]], [1]]), 0.2)
                         edgesShadowUpper.append(posShadowUpper)
                         edgesShadowUpperWorld.append(posShadowUpperWorld)
                         objHeight.append(mathTools.calHeightFromShadow(
@@ -108,7 +108,7 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
                 flagObjLowerEdge = True
                 edgeObjLower.append(np.array([x, y, 1]))
                 edgeObjLowerWorld.append(mathTools.homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]])))
+                    homographyMatrix, np.array([[x], [y], [1]]), 0.2))
         # end experimental
     return np.array(edgeObjUpper), np.array(edgeObjMiddle), np.array(edgeObjLower), np.array(edgeObjUpperWorld), np.array(
         edgeObjMiddleWorld), np.array(edgeObjLowerWorld), np.array(edgesShadowLower), np.array(
