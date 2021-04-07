@@ -26,7 +26,6 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
     imgHeight, imgWidth = imgObjBin.shape
     if debug == True:
         cv2.imshow("Skeleton image", imgSkeleton)
-
     # scaning input binary image to detect the object edge
     # variable declaration
     edgeObjUpper = []
@@ -120,14 +119,23 @@ def skeleton(imgBin):
     done = False
     size = np.size(imgBin)
     skel = np.zeros_like(imgBin)
+    eroded = np.zeros_like(imgBin)
+    temp = np.zeros_like(imgBin)
+    imgOriginal = imgBin.copy()
     while(not done):
-        eroded = cv2.erode(imgBin, element)
-        temp = cv2.dilate(eroded, element)
-        temp = cv2.subtract(imgBin, temp)
-        skel = cv2.bitwise_or(skel, temp)
-        imgBin = eroded.copy()
+        # eroded = cv2.erode(imgOriginal, element)
+        # temp = cv2.dilate(eroded, element)
+        # temp = cv2.subtract(imgOriginal, temp)
+        # skel = cv2.bitwise_or(skel, temp)
+        # imgOriginal, eroded = eroded, imgOriginal
+        cv2.erode(imgOriginal, element, eroded)
+        cv2.dilate(eroded, element, temp)
+        cv2.subtract(imgOriginal, temp, temp)
+        cv2.bitwise_or(skel, temp, skel)
+        imgOriginal, eroded = eroded, imgOriginal
 
-        zeros = size - cv2.countNonZero(imgBin)
-        if zeros == size:
-            done = True
-    return skel
+        # zeros = size - cv2.countNonZero(imgBin)
+        # if zeros == size:
+        #     done = True
+        if cv2.countNonZero(imgOriginal) == 0:
+            return skel

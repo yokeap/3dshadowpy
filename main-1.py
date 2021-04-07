@@ -8,7 +8,7 @@ import matplotlib.pyplot as plot
 import time
 # import sys
 # sys.path.append('./calFunction')
-debug = False
+debug = True
 
 # start timer
 start = time.time()
@@ -58,11 +58,11 @@ if debug == True:
     cv2.imshow("Image And", imgAnd)
 ret, imgBin = cv2.threshold(imgAnd, 50, 255, cv2.THRESH_BINARY)
 imgOpening = cv2.morphologyEx(imgBin, cv2.MORPH_OPEN,
-                              np.ones((15, 15), np.uint8))
+                              np.ones((3, 3), np.uint8))
 if debug == True:
     cv2.imshow("Morphology", imgOpening)
 
-imgObj = segmentation.obj(imgSample, diffImageBW)
+imgObj = segmentation.obj(imgSample, imgOpening)
 cv2.imshow("Object Image", imgObj)
 # imgCentroid = segmentation.pseudoSkeleton(imgObj, imgSample)
 # cv2.imshow("Centroid Image", imgCentroid)
