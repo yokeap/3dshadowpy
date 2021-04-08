@@ -13,8 +13,8 @@ debug = False
 # -
 
 
-def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVirlightWorld):
-    count = 0
+def reconstruct(imgObjBin, imgShadowBin, posCrop, homographyMatrix, posVirlightImg, posVirlightWorld):
+    loop = 0
     # median filter was used to expand and fill some hole
     # imgBin = cv2.blur(imgBin, (3, 3))
     imgSkeleton = skeletonize(imgObjBin, method='lee')
@@ -42,42 +42,45 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
     objHeight = []
     heightShadow = np.empty(imgHeight)
     # scan for all (object: upper, middle and lower edge; shadow lower edge)
-    for x in range(imgWidth):
+    for x in range(imgWidth - 1):
         flagObjUpperEdge = False
         flagObjMiddleEdge = False
         flagObjLowerEdge = False
         flagShadowLowerEdge = False
         flagShadowUpperEdge = False
         # for uppper edges
-        for y in range(imgHeight):
+        for y in range(imgHeight - 1):
             pixObjVal = imgObjBin.item(y, x)
             pixSkeletonVal = imgSkeleton.item(y, x)
             pixShadowVal = imgShadowBin.item(y, x)
+            # xx, yy is origianl position before cropped
+            xx = x + posCrop[0]
+            yy = y + posCrop[1]
             # upper edges detection
             if flagObjUpperEdge == False and pixObjVal > 0:
                 flagObjUpperEdge = True
                 # save x y coordinate with homogeneous coordiate
-                edgeObjUpper.append(np.array([x, y, 1]))
+                edgeObjUpper.append(np.array([xx, yy, 1]))
                 edgeObjUpperWorld.append(mathTools.homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]]), 0.2))
+                    homographyMatrix, np.array([[xx], [yy], [1]]), 0.2))
                 # #  centroid edges (from skeleton image), then lower edges (object image) and then lower edges of shadow (max shadow distance)
             if flagObjMiddleEdge == False and flagObjUpperEdge == True and pixSkeletonVal > 0:
                 flagObjMiddleEdge = True
-                posCentroid = np.array([x, y, 1])
+                posCentroid = np.array([xx, yy, 1])
                 posCentroidWorld = mathTools.homographyTransform(
                     homographyMatrix, posCentroid, 0.2)
                 edgeObjMiddle.append(posCentroid)
                 edgeObjMiddleWorld.append(posCentroidWorld)
                 # compute unit vector from centroid position (direction vector related with virtual light position)
                 centroid2LightUnitVector = mathTools.unitVector2D(
-                    [x, y], posVirlightImg[0:2])
+                    [xx, yy], posVirlightImg[0:2])
                 # scanning to find the maximum shadow distance (shadow lowest edge) with respect with centroid
                 # using unit vector for direction reference then interpolate from centroid position until found the maximum shadow edge
                 flagShadowLowerEdge = False
                 flagShadowUpperEdge = False
                 for s in range(0, (imgHeight - 1)):
                     posSampling = np.array(
-                        [float(x), float(y)]) + s*centroid2LightUnitVector
+                        [float(xx), float(yy)]) + s*centroid2LightUnitVector
                     # print(posSampling)
                     if(posSampling[0] > imgWidth):
                         posSampling[0] = imgWidth - 1
@@ -105,9 +108,9 @@ def reconstruct(imgObjBin, imgShadowBin, homographyMatrix, posVirlightImg, posVi
             # for lower edges
             if flagObjLowerEdge == False and flagObjUpperEdge == True and pixObjVal < 255:
                 flagObjLowerEdge = True
-                edgeObjLower.append(np.array([x, y, 1]))
+                edgeObjLower.append(np.array([xx, yy, 1]))
                 edgeObjLowerWorld.append(mathTools.homographyTransform(
-                    homographyMatrix, np.array([[x], [y], [1]]), 0.2))
+                    homographyMatrix, np.array([[xx], [yy], [1]]), 0.2))
         # end experimental
     return np.array(edgeObjUpper), np.array(edgeObjMiddle), np.array(edgeObjLower), np.array(edgeObjUpperWorld), np.array(
         edgeObjMiddleWorld), np.array(edgeObjLowerWorld), np.array(edgesShadowLower), np.array(

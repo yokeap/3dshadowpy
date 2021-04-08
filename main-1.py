@@ -59,21 +59,30 @@ if debug == True:
 ret, imgBin = cv2.threshold(imgAnd, 50, 255, cv2.THRESH_BINARY)
 imgOpening = cv2.morphologyEx(imgBin, cv2.MORPH_OPEN,
                               np.ones((3, 3), np.uint8))
+imgOpening = cv2.medianBlur(imgOpening, 9)
 if debug == True:
     cv2.imshow("Morphology", imgOpening)
 
-imgObj = segmentation.obj(imgSample, imgOpening)
+imgObjShadowCropped, imgObj, posCrop = segmentation.obj(imgSample, imgOpening)
 cv2.imshow("Object Image", imgObj)
+cv2.imshow("Cropped Object Image", imgObjShadowCropped)
 # imgCentroid = segmentation.pseudoSkeleton(imgObj, imgSample)
 # cv2.imshow("Centroid Image", imgCentroid)
-imgShadow = segmentation.shadow(imgOpening, imgObj)
+imgShadow = segmentation.shadow(imgObjShadowCropped, imgObj)
 cv2.imshow("Shadow Image", imgShadow)
 
 imgMerge = cv2.bitwise_or(imgObj, imgShadow)
 cv2.imshow("Image Merge", imgMerge)
 
 imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower, imgShadowEdgesLower, imgShadowEdgesUpper, worldShadowEdgesLower, worldShadowEdgesUpper, objHeight = reconstruct.reconstruct(
-    imgObj, imgShadow, homographyMatrix, virLightPosIMG, virLightPos)
+    imgObj, imgShadow, posCrop, homographyMatrix, virLightPosIMG, virLightPos)
+
+# print(objHeight.shape)
+
+# sectionRight = np.array(
+#     [worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1], objHeight[:]])
+
+# print(sectionRight[:, 0])
 
 end = time.time()
 print("processed time = ", (end - start), "s")
@@ -127,7 +136,7 @@ worldCoordinate.set_xlabel('x (mm)')
 worldCoordinate.set_ylabel('y (mm)')
 worldCoordinate.set_zlabel('z (mm)')
 worldCoordinate.legend()
-plot.show()
+# plot.show()
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()

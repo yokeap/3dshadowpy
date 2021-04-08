@@ -26,40 +26,48 @@ def draw_angled_rec(x0, y0, width, height, angle, img):
 
 
 def obj(imgSample, imgMask):
-    # contours, hierarchy = cv2.findContours(
-    #     imgMask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    # if len(contours) != 0:
-    #     # find the biggest area of the contour
-    #     big_contour = max(contours, key=cv2.contourArea)
-    #     # draw filled contour on black background
-    #     mask = np.zeros_like(imgSample)
-    #     # mask[:, :] = (255, 0, 0)
-    #     cv2.drawContours(mask, [big_contour], 0, (255, 255, 255), -1)
-    # if debug == True:
-    #     cv2.imshow("Mask", mask)
-    height, width, channel = imgSample.shape
-    imgMaskRgb = np.zeros_like(imgSample)
-    imgMaskRgb[:, :, 0] = imgMask
-    imgMaskRgb[:, :, 1] = imgMask
-    imgMaskRgb[:, :, 2] = imgMask
+    contours, hierarchy = cv2.findContours(
+        imgMask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if len(contours) != 0:
+        # find the biggest area of the contour
+        big_contour = max(contours, key=cv2.contourArea)
+        # draw filled contour on black background
+        # mask = np.zeros_like(imgMask)
+        # mask[:, :] = (255, 0, 0)
+        # cv2.drawContours(mask, [big_contour], 0, 255, -1)
+        x, y, w, h = cv2.boundingRect(big_contour)
+        imgMaskCropped = imgMask[y:y+h, x:x+w]
+        # cropping in color original image
+        imgMaskRGBCropped = imgSample[y:y+h, x:x+w]
+    if debug == True:
+        cv2.imshow("Masked", imgMaskRGBCropped)
+
+    # height, width, channel = imgSample.shape
+    # imgMaskRgb = np.zeros_like(imgSample)
+    # imgMaskRgb[:, :, 0] = imgMask
+    # imgMaskRgb[:, :, 1] = imgMask
+    # imgMaskRgb[:, :, 2] = imgMask
     # apply mask to input image
     # Create a green screen image (background color is used to seperated the object).
     # ie. apple used green screen, mango used red screen.
-    greenScreenImage = cv2.bitwise_and(imgSample, imgMaskRgb)
-    if debug == True:
-        cv2.imshow("Green Screen Masking Result", greenScreenImage)
+    # greenScreenImage = cv2.bitwise_and(imgSample, imgMaskRgb)
+    # if debug == True:
+    #     cv2.imshow("Green Screen Masking Result", greenScreenImage)
 
     # draw boundary box of objet
     # x, y, w, h = cv2.boundingRect(big_contour)
     # # draw the 'human' contour (in green)
     # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
-    imgObj = maskObj(greenScreenImage)
+    # object segmentation from shadow by threshold in hsv color space
+    imgObj = maskObj(imgMaskRGBCropped)
     contours, hierarchy = cv2.findContours(
         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
         cv2.drawContours(imgObj, [big_contour], 0, 255, -1)
+
+        # x, y, w, h = cv2.boundingRect(big_contour)
 
         # # find centroid by image moment
         # M = cv2.moments(big_contour)
@@ -70,17 +78,20 @@ def obj(imgSample, imgMask):
         # ellipse = cv2.fitEllipse(big_contour)
         # # imgObj = cv2.ellipse(imgObj, ellipse, 255, 1)
         # # imgObj = cv2.blur(imgObj, (10, 10))
-        imgObj = cv2.medianBlur(imgObj, 9)
+        # imgObj = cv2.medianBlur(imgObj, 9)
+        # cropped_contour = imgObj[y:y+h, x:x+w]
         if debug == True:
             cv2.imshow("Median Filtering", imgObj)
-    return imgObj
+    return imgMaskCropped, imgObj, [x, y, w, h]
 
 
 def shadow(imgMask, imgObj):
     imgOut = np.zeros_like(imgObj)
-    # morphology a little bit to imgObj
+    # # morphology a little bit to imgObj
+    # imgMask = cv2.cvtColor(imgMask, cv2.COLOR_BGR2GRAY)
     # ret, imgMask = cv2.threshold(imgMask, 50, 255, cv2.THRESH_BINARY)
     cv2.imshow("Input Shadow Image", imgMask)
+    print(imgMask.shape, imgObj.shape)
     imgShadow = cv2.bitwise_xor(imgMask, imgObj)
     # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
     #                              np.ones((15, 15), np.uint8))
@@ -93,6 +104,9 @@ def shadow(imgMask, imgObj):
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
         cv2.drawContours(imgOut, [big_contour], 0, 255, -1)
+        # x, y, w, h = cv2.boundingRect(big_contour)
+        # imgOut = cv2.medianBlur(imgOut, 9)
+        # cropped_contour = imgOut[y:y+h, x:x+w]
         # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
         #                              np.ones((15, 15), np.uint8))
     return imgOut
