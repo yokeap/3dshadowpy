@@ -25,41 +25,35 @@ def draw_angled_rec(x0, y0, width, height, angle, img):
     return img
 
 
-def obj(imgSample, imgMask):
+def obj(imgSample, imgOpening):
     contours, hierarchy = cv2.findContours(
-        imgMask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
         # draw filled contour on black background
-        # mask = np.zeros_like(imgMask)
-        # mask[:, :] = (255, 0, 0)
-        # cv2.drawContours(mask, [big_contour], 0, 255, -1)
+        # imgMask = np.zeros_like(imgSample)
+        # cv2.drawContours(imgMask, [big_contour], 0, (255, 255, 255), -1)
         x, y, w, h = cv2.boundingRect(big_contour)
-        imgMaskCropped = imgMask[y:y+h, x:x+w]
-        # cropping in color original image
-        imgMaskRGBCropped = imgSample[y:y+h, x:x+w]
-    if debug == True:
-        cv2.imshow("Masked", imgMaskRGBCropped)
 
     # height, width, channel = imgSample.shape
-    # imgMaskRgb = np.zeros_like(imgSample)
-    # imgMaskRgb[:, :, 0] = imgMask
-    # imgMaskRgb[:, :, 1] = imgMask
-    # imgMaskRgb[:, :, 2] = imgMask
-    # apply mask to input image
+    imgMaskRGB = np.zeros_like(imgSample)
+    imgMaskRGB[:, :, 0] = imgOpening
+    imgMaskRGB[:, :, 1] = imgOpening
+    imgMaskRGB[:, :, 2] = imgOpening
+    # apply Opening to input image
     # Create a green screen image (background color is used to seperated the object).
     # ie. apple used green screen, mango used red screen.
-    # greenScreenImage = cv2.bitwise_and(imgSample, imgMaskRgb)
-    # if debug == True:
-    #     cv2.imshow("Green Screen Masking Result", greenScreenImage)
+    imgMaskOut = cv2.bitwise_and(imgSample, imgMaskRGB)
+    if debug == True:
+        cv2.imshow("Green Screen Openinging Result", imgMaskOut)
 
     # draw boundary box of objet
     # x, y, w, h = cv2.boundingRect(big_contour)
     # # draw the 'human' contour (in green)
     # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
     # object segmentation from shadow by threshold in hsv color space
-    imgObj = maskObj(imgMaskRGBCropped)
+    imgObj = OpeningObj(imgMaskOut)
     contours, hierarchy = cv2.findContours(
         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if len(contours) != 0:
@@ -82,17 +76,17 @@ def obj(imgSample, imgMask):
         # cropped_contour = imgObj[y:y+h, x:x+w]
         if debug == True:
             cv2.imshow("Median Filtering", imgObj)
-    return imgMaskCropped, imgObj, [x, y, w, h]
+    return imgObj, [x, y, w, h]
 
 
-def shadow(imgMask, imgObj):
+def shadow(imgOpening, imgObj):
     imgOut = np.zeros_like(imgObj)
     # # morphology a little bit to imgObj
-    # imgMask = cv2.cvtColor(imgMask, cv2.COLOR_BGR2GRAY)
-    # ret, imgMask = cv2.threshold(imgMask, 50, 255, cv2.THRESH_BINARY)
-    cv2.imshow("Input Shadow Image", imgMask)
-    print(imgMask.shape, imgObj.shape)
-    imgShadow = cv2.bitwise_xor(imgMask, imgObj)
+    # imgOpening = cv2.cvtColor(imgOpening, cv2.COLOR_BGR2GRAY)
+    # ret, imgOpening = cv2.threshold(imgOpening, 50, 255, cv2.THRESH_BINARY)
+    cv2.imshow("Input Shadow Image", imgOpening)
+    print(imgOpening.shape, imgObj.shape)
+    imgShadow = cv2.bitwise_xor(imgOpening, imgObj)
     # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
     #                              np.ones((15, 15), np.uint8))
     cv2.imshow("EX OR", imgShadow)
@@ -112,7 +106,7 @@ def shadow(imgMask, imgObj):
     return imgOut
 
 
-def maskObj(img):
+def OpeningObj(img):
     # Define thresholds for channel 1 based on histogram settings
     channel1Min = 0.189 * 255
     channel1Max = 0.522 * 255
@@ -125,11 +119,11 @@ def maskObj(img):
     channel3Min = 0.157 * 255
     channel3Max = 1.000 * 255
 
-    imgMasked = np.zeros_like(img)
+    imgOpeninged = np.zeros_like(img)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    imgMasked = cv2.inRange(
+    imgOpeninged = cv2.inRange(
         hsv, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
-    return imgMasked
+    return imgOpeninged
 
 
 def pseudoSkeleton(imgObj):

@@ -63,19 +63,23 @@ imgOpening = cv2.medianBlur(imgOpening, 9)
 if debug == True:
     cv2.imshow("Morphology", imgOpening)
 
-imgObjShadowCropped, imgObj, posCrop = segmentation.obj(imgSample, imgOpening)
-cv2.imshow("Object Image", imgObj)
-cv2.imshow("Cropped Object Image", imgObjShadowCropped)
-# imgCentroid = segmentation.pseudoSkeleton(imgObj, imgSample)
-# cv2.imshow("Centroid Image", imgCentroid)
-imgShadow = segmentation.shadow(imgObjShadowCropped, imgObj)
-cv2.imshow("Shadow Image", imgShadow)
+# imgObjShadowCropped, imgObj, posCrop = segmentation.obj(imgSample, imgOpening)
+# cv2.imshow("Object Image", imgObj)
+# cv2.imshow("Cropped Object Image", imgObjShadowCropped)
+# # imgCentroid = segmentation.pseudoSkeleton(imgObj, imgSample)
+# # cv2.imshow("Centroid Image", imgCentroid)
+# imgShadow = segmentation.shadow(imgObjShadowCropped, imgObj)
+# cv2.imshow("Shadow Image", imgShadow)
 
-imgMerge = cv2.bitwise_or(imgObj, imgShadow)
-cv2.imshow("Image Merge", imgMerge)
+# imgMerge = cv2.bitwise_or(imgObj, imgShadow)
+# cv2.imshow("Image Merge", imgMerge)
 
 imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower, imgShadowEdgesLower, imgShadowEdgesUpper, worldShadowEdgesLower, worldShadowEdgesUpper, objHeight = reconstruct.reconstruct(
-    imgObj, imgShadow, posCrop, homographyMatrix, virLightPosIMG, virLightPos)
+    imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos)
+
+
+# imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower, imgShadowEdgesLower, imgShadowEdgesUpper, worldShadowEdgesLower, worldShadowEdgesUpper, objHeight = reconstruct.reconstruct(
+#     imgObj, imgShadow, posCrop, homographyMatrix, virLightPosIMG, virLightPos)
 
 # print(objHeight.shape)
 
@@ -136,7 +140,7 @@ worldCoordinate.set_xlabel('x (mm)')
 worldCoordinate.set_ylabel('y (mm)')
 worldCoordinate.set_zlabel('z (mm)')
 worldCoordinate.legend()
-# plot.show()
+plot.show()
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
