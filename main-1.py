@@ -63,62 +63,90 @@ imgOpening = cv2.medianBlur(imgOpening, 9)
 if debug == True:
     cv2.imshow("Morphology", imgOpening)
 
-imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower, imgShadowEdgesLower, imgShadowEdgesUpper, worldShadowEdgesLower, worldShadowEdgesUpper, objHeight = reconstruct.reconstruct(
-    imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos)
+objReconstruct = reconstruct.ObjReconstruction(
+    imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos, scale)
+objReconstruct.reconstruct()
+
+
+# imgObjEdgeUpper, imgObjEdgeMiddle, imgObjEdgeLower, worldObjEdgeUpper, worldObjEdgeMiddle, worldObjEdgeLower, imgShadowEdgesLower, imgShadowEdgesUpper, worldShadowEdgesLower, worldShadowEdgesUpper, objHeight = reconstruct.reconstruct(
+#     imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos)
+
+# worldObjEdgeUpper[:, 2] =
+
+# volumetric visualization constructing
+# sectionLeftCloudPoint = [(worldObjEdgeUpper[:, 0]),
+#                          (worldObjEdgeUpper[:, 1]), (objHeight[:]/2)]
+# sectionRightCloudPoint = [worldObjEdgeLower[:, 0],
+#                           worldObjEdgeLower[:, 1], objHeight[:]/2]
+# upperCloudPoint = [worldObjEdgeMiddle[:, 0],
+#                    worldObjEdgeMiddle[:, 1], objHeight[:]]
+# lowerCloudPoint = [worldObjEdgeMiddle[:, 0],
+#                    worldObjEdgeMiddle[:, 1], np.zeros(objHeight.shape)]
+# sectionLeftCloudPoint = np.array(
+#     [(worldObjEdgeUpper[:, 0].tolist()), (worldObjEdgeUpper[:, 1].tolist())]).T
+# sectionRightCloudPoint = np.array(
+#     [worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1], objHeight[:]/2])
+# upperCloudPoint = np.array(
+#     [worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1], objHeight[:]])
+# LowerCloudPoint = np.array(
+#     [worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1], np.zeros(objHeight.shape)])
+
+# print(sectionLeftCloudPoint[:][1].tolist())
+# sectionLeftCloudPoint = np.array(sectionLeftCloudPoint)
+
+# sectionLeftCloudPoint = np.column_stack(
+#     (worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1], objHeight[:].tolist()), dtype='object')
+
+# print(sectionLeftCloudPoint.shape)
 
 end = time.time()
 print("processed time = ", (end - start), "s")
 
+objReconstruct.imgChart_3d()
+objReconstruct.worldChart_3d()
+
 # plot upper and lower edge in image coordinate
-fig1 = plot.figure()
-imageCoordinate = plot.axes(projection='3d')
 
-imageCoordinate.scatter(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
-                        imgObjEdgeUpper[:, 2], s=[0.1], label='Upper Edge')
-imageCoordinate.scatter(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
-                        imgObjEdgeMiddle[:, 2], s=[0.1], label='Middle Edge')
-imageCoordinate.scatter(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
-                        imgObjEdgeLower[:, 2], s=[0.1], label='Lower Edge')
-imageCoordinate.scatter(imgShadowEdgesLower[:, 0], imgShadowEdgesLower[:, 1],
-                        imgShadowEdgesLower[:, 2], s=[0.1], label='Shadow Lower Edge')
-imageCoordinate.scatter(imgShadowEdgesUpper[:, 0], imgShadowEdgesUpper[:, 1],
-                        imgShadowEdgesUpper[:, 2], s=[0.1], label='Shadow Upper Edge')
-# draw line from virtual light source position to head and tail shadow position
-# shadow head
-for i in range(0, imgShadowEdgesUpper.shape[0], 100):
-    imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[i, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[i, 1]],
-                         [virLightPosIMG[2], imgShadowEdgesUpper[i, 2]])
-# # shadow tail
-# imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 1]],
-#                      [virLightPosIMG[2], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 2]])
-imageCoordinate.set_xlabel('x (Pixels)')
-imageCoordinate.set_ylabel('y (Pixels)')
-imageCoordinate.set_zlabel('z (mm)')
-imageCoordinate.legend()
+# # Upper and lower ege in world coordinate (in mm unit)
+# fig2 = plot.figure()
+# worldCoordinate = plot.axes(projection='3d')
+# worldCoordinate.scatter(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
+#                         worldObjEdgeUpper[:, 2], label='Upper Edge')
+# worldCoordinate.scatter(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
+#                         worldObjEdgeMiddle[:, 2], label='Middle Edge')
+# worldCoordinate.scatter(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
+#                         worldObjEdgeLower[:, 2], label='Lower Edge')
+# worldCoordinate.scatter(worldShadowEdgesLower[:, 0], worldShadowEdgesLower[:, 1],
+#                         worldShadowEdgesLower[:, 2], label='Shadow Lower Edge')
+# worldCoordinate.scatter(worldShadowEdgesUpper[:, 0], worldShadowEdgesUpper[:, 1],
+#                         worldShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
+# # draw line from virtual light source position to head and tail shadow position
+# # shadow head
+# for i in range(0, imgShadowEdgesUpper.shape[0], 100):
+#     worldCoordinate.plot([virLightPos[0], worldShadowEdgesUpper[i, 0]], [virLightPos[1], worldShadowEdgesUpper[i, 1]],
+#                          [virLightPos[2], worldShadowEdgesUpper[i, 2]])
+# worldCoordinate.set_xlabel('x (mm)')
+# worldCoordinate.set_ylabel('y (mm)')
+# worldCoordinate.set_zlabel('z (mm)')
+# worldCoordinate.legend()
 
-# Upper and lower ege in world coordinate (in mm unit)
-fig2 = plot.figure()
-worldCoordinate = plot.axes(projection='3d')
-worldCoordinate.scatter(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
-                        worldObjEdgeUpper[:, 2], label='Upper Edge')
-worldCoordinate.scatter(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
-                        worldObjEdgeMiddle[:, 2], label='Middle Edge')
-worldCoordinate.scatter(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
-                        worldObjEdgeLower[:, 2], label='Lower Edge')
-worldCoordinate.scatter(worldShadowEdgesLower[:, 0], worldShadowEdgesLower[:, 1],
-                        worldShadowEdgesLower[:, 2], label='Shadow Lower Edge')
-worldCoordinate.scatter(worldShadowEdgesUpper[:, 0], worldShadowEdgesUpper[:, 1],
-                        worldShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
-# draw line from virtual light source position to head and tail shadow position
-# shadow head
-for i in range(0, imgShadowEdgesUpper.shape[0], 100):
-    worldCoordinate.plot([virLightPos[0], worldShadowEdgesUpper[i, 0]], [virLightPos[1], worldShadowEdgesUpper[i, 1]],
-                         [virLightPos[2], worldShadowEdgesUpper[i, 2]])
-worldCoordinate.set_xlabel('x (mm)')
-worldCoordinate.set_ylabel('y (mm)')
-worldCoordinate.set_zlabel('z (mm)')
-worldCoordinate.legend()
-plot.show()
+# Volumetric chart
+# fig3 = plot.figure()
+# volumetricChart = plot.axes(projection='3d')
+# volumetricChart.scatter(
+#     worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1], objHeight[:], s=[0.1], label='Section left')
+# # volumetricChart.scatter(
+# #     sectionRightCloudPoint[:][0], sectionRightCloudPoint[:][1], sectionRightCloudPoint[:][2], s=[0.1], label='Section Right')
+# # volumetricChart.scatter(
+# #     upperCloudPoint[:][0], upperCloudPoint[:][1], upperCloudPoint[:][2], s=[0.1], label='Upper')
+# # volumetricChart.scatter(
+# #     lowerCloudPoint[:][0], lowerCloudPoint[:][1], lowerCloudPoint[:][2], s=[0.1], label='Lower')
+# volumetricChart.set_xlabel('x (mm)')
+# volumetricChart.set_ylabel('y (mm)')
+# volumetricChart.set_zlabel('z (mm)')
+# volumetricChart.legend()
+
+# plot.show()
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()

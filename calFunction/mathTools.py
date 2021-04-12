@@ -20,12 +20,15 @@ def homographyTransform(homographyMatrix, inputMatrix, scale):
     homographyMatrix = np.array(homographyMatrix)
     # inputMatrix = np.array(inputMatrix)
     inputMatrix = np.array(
-        [[inputMatrix[0] * scale], [inputMatrix[1] * scale], [1]])
+        [[inputMatrix[0] * scale], [inputMatrix[1] * scale], [1]], dtype=object)
     PR = np.matmul(homographyMatrix, inputMatrix)
     newX = PR[0]/PR[2]
     newY = PR[1]/PR[2]
+    worldUnit = [newX.tolist()[0], newY.tolist()[0], 0]
+    # print(worldUnit)
+
     # worldUnit = np.array([[newX], [newY], [0]])
-    worldUnit = np.array([newX, newY, 0], dtype=object)
+    # worldUnit = np.array([newX, newY, 0], dtype=object)
     return worldUnit
 
 # compute the position of 2-rays intersection
