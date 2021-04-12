@@ -26,7 +26,12 @@ class ObjReconstruction:
         height, width, channel = imgSample.shape
         self.ptCloudSectionLeft = np.empty((height, 3))
         self.ptCloudSectionRight = np.empty((height, 3))
-        self.objHeight = np.empty((height, 3))
+        self.ptCloudObjHeightUpper = np.empty((height, 3))
+        self.ptCloudObjHeightLower = np.empty((height, 3))
+        # self.ptCloudSectionLeft = np.array((height, 3))
+        # self.ptCloudSectionRight = np.array((height, 3))
+        # self.ptCloudObjHeightUpper = np.array((height, 3))
+        print(self.ptCloudSectionLeft.shape)
         self.scale = scale
 
     def skeleton(imgBin):
@@ -86,7 +91,7 @@ class ObjReconstruction:
         self.edgesShadowUpperWorld = []
         self.edgesShadowLower = []
         self.edgesShadowLowerWorld = []
-        # self.objHeight=[]
+        # self.ptCloudObjHeightUpper=[]
         self.heightShadow = np.empty(imgHeight)
         # scan for all (object: upper, middle and lower edge; shadow lower edge)
         for x in range(posCrop[0], posCrop[0] + posCrop[2]):
@@ -122,7 +127,8 @@ class ObjReconstruction:
                         self.homographyMatrix, posCentroid, self.scale)
                     self.edgeObjMiddle.append(np.array(posCentroid))
                     self.edgeObjMiddleWorld.append(posCentroidWorld)
-                    self.objHeight[loop, :] = posCentroid
+                    self.ptCloudObjHeightUpper[loop, :] = posCentroidWorld
+                    self.ptCloudObjHeightLower[loop, :] = posCentroidWorld
                     # compute unit vector from centroid position (direction vector related with virtual light position)
                     centroid2LightUnitVector = mathTools.unitVector2D(
                         [x, y], self.posVirlightIMG[0:2])
@@ -161,8 +167,17 @@ class ObjReconstruction:
                                 np.array(posShadowUpper))
                             self.edgesShadowUpperWorld.append(
                                 posShadowUpperWorld)
-                            self.objHeight[loop, 2] = mathTools.calHeightFromShadow(
+                            skeletonHeight = mathTools.calHeightFromShadow(
                                 posShadowUpper, posCentroid, posShadowUpperWorld, posCentroidWorld, self.posVirlightWorld)
+                            self.ptCloudSectionLeft[loop,
+                                                    2] = skeletonHeight / 2
+                            self.ptCloudSectionRight[loop,
+                                                     2] = skeletonHeight / 2
+                            self.ptCloudObjHeightUpper[loop,
+                                                       2] = skeletonHeight
+                            self.ptCloudObjHeightLower[loop,
+                                                       2] = 0
+                            loop = loop + 1
                             break
                 # for lower edges
                 if flagObjLowerEdge == False and flagObjUpperEdge == True and pixObjVal < 255:
@@ -172,18 +187,9 @@ class ObjReconstruction:
                         self.homographyMatrix, posLower, 0.2)
                     self.edgeObjLower.append(np.array(posLower))
                     self.edgeObjLowerWorld.append(posLowerWorld)
-                    self.ptCloudSectionRight[loop, :] = posLowerWorld
-                    loop = loop + 1
+                    self.ptCloudSectionRight[loop, 0] = posLowerWorld[0]
+                    self.ptCloudSectionRight[loop, 1] = posLowerWorld[1]
                     break
-        # return np.array(edgeObjUpper), np.array(edgeObjMiddle), np.array(edgeObjLower), np.array(edgeObjUpperWorld), np.array(
-        #     edgeObjMiddleWorld), np.array(edgeObjLowerWorld), np.array(edgesShadowLower), np.array(
-        #         edgesShadowUpper), np.array(edgesShadowLowerWorld), np.array(edgesShadowUpperWorld), np.array(objHeight)
-
-#     # return np.asarray(edgeObjUpper), np.asarray(edgeObjMiddle), np.asarray(edgeObjLower), np.asarray(edgeObjUpperWorld), np.asarray(
-#     #     edgeObjMiddleWorld), np.asarray(edgeObjLowerWorld), np.asarray(edgesShadowLower), np.asarray(
-#     #         edgesShadowUpper), np.asarray(edgesShadowLowerWorld), np.asarray(edgesShadowUpperWorld), np.asarray(objHeight)
-
-#     # return edgeObjUpper, edgeObjMiddle, edgeObjLower, edgeObjUpperWorld, edgeObjMiddleWorld, edgeObjLowerWorld, edgesShadowLower, edgesShadowUpper, edgesShadowLowerWorld, edgesShadowUpperWorld, objHeight
 
     def imgChart_3d(self):
         imgObjEdgeUpper = np.array(self.edgeObjUpper)
@@ -210,15 +216,12 @@ class ObjReconstruction:
         for i in range(0, imgShadowEdgesUpper.shape[0], 100):
             imageCoordinate.plot([self.posVirlightIMG[0], imgShadowEdgesUpper[i, 0]], [self.posVirlightIMG[1], imgShadowEdgesUpper[i, 1]],
                                  [self.posVirlightIMG[2], imgShadowEdgesUpper[i, 2]])
-        # # shadow tail
-        # imageCoordinate.plot([virLightPosIMG[0], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 0]], [virLightPosIMG[1], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 1]],
-        #                      [virLightPosIMG[2], imgShadowEdgesUpper[imgShadowEdgesUpper.shape[0] - 1, 2]])
         imageCoordinate.set_xlabel('x (Pixels)')
         imageCoordinate.set_ylabel('y (Pixels)')
         imageCoordinate.set_zlabel('z (mm)')
         imageCoordinate.legend()
 
-        plot.show()
+        figIMG.show()
 
     def worldChart_3d(self):
         worldObjEdgeUpper = np.array(self.edgeObjUpperWorld)
@@ -230,15 +233,15 @@ class ObjReconstruction:
         figWorld = plot.figure()
         worldCoordinate = plot.axes(projection='3d')
         worldCoordinate.scatter(worldObjEdgeUpper[:, 0], worldObjEdgeUpper[:, 1],
-                                worldObjEdgeUpper[:, 2], label='Upper Edge')
+                                worldObjEdgeUpper[:, 2], s=[0.1], label='Upper Edge')
         worldCoordinate.scatter(worldObjEdgeMiddle[:, 0], worldObjEdgeMiddle[:, 1],
-                                worldObjEdgeMiddle[:, 2], label='Middle Edge')
+                                worldObjEdgeMiddle[:, 2], s=[0.1], label='Middle Edge')
         worldCoordinate.scatter(worldObjEdgeLower[:, 0], worldObjEdgeLower[:, 1],
-                                worldObjEdgeLower[:, 2], label='Lower Edge')
+                                worldObjEdgeLower[:, 2], s=[0.1], label='Lower Edge')
         worldCoordinate.scatter(worldShadowEdgesLower[:, 0], worldShadowEdgesLower[:, 1],
-                                worldShadowEdgesLower[:, 2], label='Shadow Lower Edge')
+                                worldShadowEdgesLower[:, 2], s=[0.1], label='Shadow Lower Edge')
         worldCoordinate.scatter(worldShadowEdgesUpper[:, 0], worldShadowEdgesUpper[:, 1],
-                                worldShadowEdgesUpper[:, 2], label='Shadow Upper Edge')
+                                worldShadowEdgesUpper[:, 2], s=[0.1], label='Shadow Upper Edge')
         # draw line from virtual light source position to head and tail shadow position
         # shadow head
         for i in range(0, worldShadowEdgesUpper.shape[0], 100):
@@ -249,4 +252,24 @@ class ObjReconstruction:
         worldCoordinate.set_zlabel('z (mm)')
         worldCoordinate.legend()
 
-        plot.show()
+        figWorld.show()
+
+    def volumeChart_3d(self):
+        figVolume = plot.figure()
+        volumeChart = plot.axes(projection='3d')
+
+        volumeChart.scatter(self.ptCloudSectionLeft[:, 0], self.ptCloudSectionLeft[:, 1],
+                            self.ptCloudSectionLeft[:, 2], s=[0.1], label='Section Left')
+        volumeChart.scatter(self.ptCloudSectionRight[:, 0], self.ptCloudSectionRight[:, 1],
+                            self.ptCloudSectionRight[:, 2], s=[0.1], label='Section Right')
+        volumeChart.scatter(self.ptCloudObjHeightUpper[:, 0], self.ptCloudObjHeightUpper[:, 1],
+                            self.ptCloudObjHeightUpper[:, 2], s=[0.1], label='Section Middle Upper')
+        volumeChart.scatter(self.ptCloudObjHeightLower[:, 0], self.ptCloudObjHeightLower[:, 1],
+                            self.ptCloudObjHeightLower[:, 2], s=[0.1], label='Section Middle Lower')
+
+        volumeChart.set_xlabel('x (mm)')
+        volumeChart.set_ylabel('y (mm)')
+        volumeChart.set_zlabel('z (mm)')
+        volumeChart.legend()
+
+        figVolume.show()

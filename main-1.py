@@ -104,6 +104,7 @@ print("processed time = ", (end - start), "s")
 
 objReconstruct.imgChart_3d()
 objReconstruct.worldChart_3d()
+objReconstruct.volumeChart_3d()
 
 # plot upper and lower edge in image coordinate
 
