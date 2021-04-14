@@ -1,5 +1,6 @@
 import numpy as np
 import math
+from scipy import interpolate
 
 
 def magnitudeCompute3D(origin, destination):
@@ -13,6 +14,21 @@ def unitVector2D(origin, dest):
     l1 = np.array([origin[0] - dest[0], origin[1] - dest[1]])
     magnitude = math.sqrt((l1[0] * l1[0]) + (l1[1] * l1[1]))
     return np.array([l1[0]/magnitude, l1[1]/magnitude])
+
+
+def splineEstimate(xy, splineResolution):
+    numberOrPoints = xy.shape[0]
+    xy = xy.T  # transpose to row
+    knots = xy
+    originalSpacing = np.arange(1, numberOrPoints + 1)
+    finerSpacing = np.arange(1, numberOrPoints, splineResolution)
+    splines = interpolate.splrep(originalSpacing, knots[0], k=2)
+    splinesX = interpolate.splev(finerSpacing, splines)
+    splines = interpolate.splrep(originalSpacing, knots[1], k=2)
+    splinesY = interpolate.splev(finerSpacing, splines)
+    # must be swap Y before X
+    splinesXY = [splinesX.tolist(), splinesY.tolist()]
+    return splinesXY
 
 
 def homographyTransform(homographyMatrix, inputMatrix, scale):
@@ -31,9 +47,8 @@ def homographyTransform(homographyMatrix, inputMatrix, scale):
     # worldUnit = np.array([newX, newY, 0], dtype=object)
     return worldUnit
 
+
 # compute the position of 2-rays intersection
-
-
 def rayintersect(origin1, origin2, unitVect1, unitVect2):
     origin1 = np.array(origin1)
     origin2 = np.array(origin2)
@@ -76,3 +91,8 @@ def calHeightFromShadow(posShadowUpperImg, posCentroidImg, posShadowUpperWorld, 
                        (vLength ** 2)) / (2 * uLength * wLength))
     skeletonHeight = shadowRange * angle
     return skeletonHeight
+
+
+# calculate area of polygon based on Shoelace method
+def polyArea(x, y):
+    return 0.5*np.abs(np.dot(x, np.roll(y, 1))-np.dot(y, np.roll(x, 1)))

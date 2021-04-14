@@ -1,3 +1,4 @@
+import pandas as pd
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
@@ -5,6 +6,8 @@ from . import mathTools
 from . import segmentation
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plot
+
+plot.style.use('seaborn-darkgrid')
 
 debug = False
 
@@ -28,10 +31,10 @@ class ObjReconstruction:
         self.ptCloudSectionRight = np.empty((height, 3))
         self.ptCloudObjHeightUpper = np.empty((height, 3))
         self.ptCloudObjHeightLower = np.empty((height, 3))
+        self.objVolume = 0
         # self.ptCloudSectionLeft = np.array((height, 3))
         # self.ptCloudSectionRight = np.array((height, 3))
-        # self.ptCloudObjHeightUpper = np.array((height, 3))
-        print(self.ptCloudSectionLeft.shape)
+
         self.scale = scale
 
     def skeleton(imgBin):
@@ -61,7 +64,7 @@ class ObjReconstruction:
                 return skel
 
     def reconstruct(self):
-        loop = 0
+        self.loop = 0
         # median filter was used to expand and fill some hole
         # imgBin = cv2.blur(imgBin, (3, 3))
         imgObjBin, posCrop = segmentation.obj(
@@ -118,7 +121,7 @@ class ObjReconstruction:
                         self.homographyMatrix, posUpper, self.scale)
                     self.edgeObjUpper.append(np.array(posUpper))
                     self.edgeObjUpperWorld.append(posUpperWorld)
-                    self.ptCloudSectionLeft[loop, :] = posUpperWorld
+                    self.ptCloudSectionLeft[self.loop, :] = posUpperWorld
                     # #  centroid edges (from skeleton image), then lower edges (object image) and then lower edges of shadow (max shadow distance)
                 if flagObjMiddleEdge == False and flagObjUpperEdge == True and pixSkeletonVal > 0:
                     flagObjMiddleEdge = True
@@ -127,8 +130,8 @@ class ObjReconstruction:
                         self.homographyMatrix, posCentroid, self.scale)
                     self.edgeObjMiddle.append(np.array(posCentroid))
                     self.edgeObjMiddleWorld.append(posCentroidWorld)
-                    self.ptCloudObjHeightUpper[loop, :] = posCentroidWorld
-                    self.ptCloudObjHeightLower[loop, :] = posCentroidWorld
+                    self.ptCloudObjHeightUpper[self.loop, :] = posCentroidWorld
+                    self.ptCloudObjHeightLower[self.loop, :] = posCentroidWorld
                     # compute unit vector from centroid position (direction vector related with virtual light position)
                     centroid2LightUnitVector = mathTools.unitVector2D(
                         [x, y], self.posVirlightIMG[0:2])
@@ -169,15 +172,15 @@ class ObjReconstruction:
                                 posShadowUpperWorld)
                             skeletonHeight = mathTools.calHeightFromShadow(
                                 posShadowUpper, posCentroid, posShadowUpperWorld, posCentroidWorld, self.posVirlightWorld)
-                            self.ptCloudSectionLeft[loop,
+                            self.ptCloudSectionLeft[self.loop,
                                                     2] = skeletonHeight / 2
-                            self.ptCloudSectionRight[loop,
+                            self.ptCloudSectionRight[self.loop,
                                                      2] = skeletonHeight / 2
-                            self.ptCloudObjHeightUpper[loop,
+                            self.ptCloudObjHeightUpper[self.loop,
                                                        2] = skeletonHeight
-                            self.ptCloudObjHeightLower[loop,
+                            self.ptCloudObjHeightLower[self.loop,
                                                        2] = 0
-                            loop = loop + 1
+                            self.loop = self.loop + 1
                             break
                 # for lower edges
                 if flagObjLowerEdge == False and flagObjUpperEdge == True and pixObjVal < 255:
@@ -187,9 +190,119 @@ class ObjReconstruction:
                         self.homographyMatrix, posLower, 0.2)
                     self.edgeObjLower.append(np.array(posLower))
                     self.edgeObjLowerWorld.append(posLowerWorld)
-                    self.ptCloudSectionRight[loop, 0] = posLowerWorld[0]
-                    self.ptCloudSectionRight[loop, 1] = posLowerWorld[1]
+                    self.ptCloudSectionRight[self.loop, 0] = posLowerWorld[0]
+                    self.ptCloudSectionRight[self.loop, 1] = posLowerWorld[1]
                     break
+        print(self.loop)
+
+    def reconstructVolume(self, splineResolution):
+        # creat 3D array to store point cloud
+        #        1st array              nth array
+        # [upper.x   upper.z]       [upper.x   upper.z]
+        # [middle.x  middle.z] ...  [middle.x  middle.z]
+        # [lower.x   lower.z]       [lower.x   lower.z]
+        #
+        # ---- Parameters description ------
+        # splineResolution = amount of spline estimation points, default is 0.05
+
+        # 3 base points upper middle lower.
+        splineTotalPoints = int(
+            (self.ptCloudSectionLeft.shape[1] - 1) / splineResolution)
+        self.halfSliceLeft = np.zeros(
+            (self.ptCloudSectionLeft.shape[1], 2, self.ptCloudSectionLeft.shape[0]))
+        self.halfSliceRight = np.zeros(
+            (self.ptCloudSectionLeft.shape[1], 2, self.ptCloudSectionLeft.shape[0]))
+        self.sliceSplineLeft = np.zeros(
+            (splineTotalPoints, 2, self.ptCloudSectionLeft.shape[0]))
+        self.sliceSplineRight = np.zeros(
+            (splineTotalPoints, 2, self.ptCloudSectionLeft.shape[0]))
+        self.sliceModel = np.zeros(
+            (splineTotalPoints * 2, 3, self.ptCloudSectionLeft.shape[0]))
+        self.sliceModelArea = np.zeros(
+            (self.ptCloudSectionLeft.shape[0], 2,))
+        self.sliceSplineX = np.array([])
+        self.sliceSplineY = np.array([])
+        self.sliceSplineZ = np.array([])
+        self.totalLength = self.ptCloudSectionLeft[self.loop -
+                                                   1, 1] - self.ptCloudSectionLeft[0, 1]
+        print("Object Total Length = ", self.totalLength)
+
+        for i in range(0, self.loop):
+            # to compute area properly polygon points must be sort to counter clockwise
+            # start with top with half left slice
+            # append x of upper, middle and lower to 3d array
+            self.halfSliceLeft[:, 0, i] = (self.ptCloudObjHeightUpper[i, 0],
+                                           self.ptCloudSectionLeft[i, 0], self.ptCloudObjHeightLower[i, 0])
+            # apped y of upper, middle and lower to 3d array
+            self.halfSliceLeft[:, 1, i] = (self.ptCloudObjHeightUpper[i, 2],
+                                           self.ptCloudSectionLeft[i, 2], self.ptCloudObjHeightLower[i, 2])
+            # half right slice
+            # append x of lower, middle and upper to 3d array
+            self.halfSliceRight[:, 0, i] = (self.ptCloudObjHeightLower[i, 0],
+                                            self.ptCloudSectionRight[i, 0], self.ptCloudObjHeightUpper[i, 0])
+            # apped y of upper, middle and lower to 3d array
+            self.halfSliceRight[:, 1, i] = (self.ptCloudObjHeightLower[i, 2],
+                                            self.ptCloudSectionRight[i, 2], self.ptCloudObjHeightUpper[i, 2])
+            # spline estimation of half slice left side
+            self.sliceSplineLeft[:, :, i] = np.array(mathTools.splineEstimate(
+                self.halfSliceLeft[:, :, i], splineResolution)).T
+            # spline estimation half slice right side
+            self.sliceSplineRight[:, :, i] = np.array(mathTools.splineEstimate(
+                self.halfSliceRight[:, :, i], splineResolution)).T
+
+            # append y (length of object) to first column of sliceModel
+            self.sliceModel[:, 0, i] = self.ptCloudSectionLeft[i, 1]
+            # append x and z from half left and right spline interpolation
+            self.sliceModel[:, 1, i] = np.concatenate(
+                (self.sliceSplineLeft[:, 0, i], self.sliceSplineRight[:, 0, i]), axis=None)
+            self.sliceModel[:, 2, i] = np.concatenate(
+                (self.sliceSplineLeft[:, 1, i], self.sliceSplineRight[:, 1, i]), axis=None)
+            # self.sliceModel[:, 1:3, i] = np.concatenate(
+            #     (self.sliceSplineLeft[:, :, i], self.sliceSplineRight[:, :, i]), axis=None)
+
+            # compute area of each slice of object length (along with y-axis)
+            # append y (length of object) to first column of sliceModelArea
+            self.sliceModelArea[i, 0] = self.ptCloudSectionLeft[i, 1]
+            # 2nd is column of computes polygon area
+            self.sliceModelArea[i, 1] = mathTools.polyArea(
+                self.sliceModel[:, 1, i], self.sliceModel[:, 2, i])
+
+            self.sliceSplineX = np.concatenate(
+                (self.sliceSplineX, self.sliceModel[:, 0, i]), axis=None)
+            self.sliceSplineY = np.concatenate(
+                (self.sliceSplineY, self.sliceModel[:, 1, i]), axis=None)
+            self.sliceSplineZ = np.concatenate(
+                (self.sliceSplineZ, self.sliceModel[:, 2, i]), axis=None)
+
+            # compute object volume by integrate computed areas
+            if i > 0:
+                sumVolume = self.sliceModelArea[i, 1] * (
+                    self.sliceModelArea[i, 0] - self.sliceModelArea[i-1, 0])
+                self.objVolume = self.objVolume + sumVolume
+
+                # sA = ((self.sliceModelArea[i, 1] + self.sliceModelArea[i-1, 1])/2) * (self.sliceModelArea[i, 0] - self.sliceModelArea[i-1, 0]) + (
+                #     self.sliceModelArea[0, 1]/2) * self.totalLength + (self.sliceModelArea[self.loop-1, 1]/2) * self.totalLength
+                # self.objVolume = self.objVolume + sA
+
+        print(self.objVolume/1000.0)
+        self.slicingObj = np.vstack(
+            [self.sliceSplineX, self.sliceSplineY, self.sliceSplineZ]).T
+
+        debug = False
+        if debug == True:
+            figSlicing = plot
+            figSlicing.scatter(
+                self.halfSliceLeft[:, 0, 0], self.halfSliceLeft[:, 1, 0], marker='o')
+            figSlicing.scatter(
+                self.halfSliceRight[:, 0, 0], self.halfSliceRight[:, 1, 0], marker='o')
+            figSlicing.show()
+
+            figSpline = plot
+            figSpline.scatter(
+                self.sliceSplineLeft[:, 0, 0], self.sliceSplineLeft[:, 1, 0], marker='o')
+            figSpline.scatter(
+                self.sliceSplineRight[:, 0, 0], self.sliceSplineRight[:, 1, 0], marker='o')
+            figSpline.show()
 
     def imgChart_3d(self):
         imgObjEdgeUpper = np.array(self.edgeObjUpper)
@@ -254,19 +367,31 @@ class ObjReconstruction:
 
         figWorld.show()
 
-    def volumeChart_3d(self):
+    def pointCloudChart_3d(self):
+        figPointCloud = plot.figure()
+        pointCloudChart = plot.axes(projection='3d')
+
+        pointCloudChart.scatter(self.ptCloudSectionLeft[:, 0], self.ptCloudSectionLeft[:, 1],
+                                self.ptCloudSectionLeft[:, 2], s=[0.1], label='Section Left')
+        pointCloudChart.scatter(self.ptCloudSectionRight[:, 0], self.ptCloudSectionRight[:, 1],
+                                self.ptCloudSectionRight[:, 2], s=[0.1], label='Section Right')
+        pointCloudChart.scatter(self.ptCloudObjHeightUpper[:, 0], self.ptCloudObjHeightUpper[:, 1],
+                                self.ptCloudObjHeightUpper[:, 2], s=[0.1], label='Section Middle Upper')
+        pointCloudChart.scatter(self.ptCloudObjHeightLower[:, 0], self.ptCloudObjHeightLower[:, 1],
+                                self.ptCloudObjHeightLower[:, 2], s=[0.1], label='Section Middle Lower')
+
+        pointCloudChart.set_xlabel('x (mm)')
+        pointCloudChart.set_ylabel('y (mm)')
+        pointCloudChart.set_zlabel('z (mm)')
+        pointCloudChart.legend()
+
+        figPointCloud.show()
+
+    def volumeChart(self):
         figVolume = plot.figure()
         volumeChart = plot.axes(projection='3d')
-
-        volumeChart.scatter(self.ptCloudSectionLeft[:, 0], self.ptCloudSectionLeft[:, 1],
-                            self.ptCloudSectionLeft[:, 2], s=[0.1], label='Section Left')
-        volumeChart.scatter(self.ptCloudSectionRight[:, 0], self.ptCloudSectionRight[:, 1],
-                            self.ptCloudSectionRight[:, 2], s=[0.1], label='Section Right')
-        volumeChart.scatter(self.ptCloudObjHeightUpper[:, 0], self.ptCloudObjHeightUpper[:, 1],
-                            self.ptCloudObjHeightUpper[:, 2], s=[0.1], label='Section Middle Upper')
-        volumeChart.scatter(self.ptCloudObjHeightLower[:, 0], self.ptCloudObjHeightLower[:, 1],
-                            self.ptCloudObjHeightLower[:, 2], s=[0.1], label='Section Middle Lower')
-
+        volumeChart.scatter(
+            self.slicingObj[:, 0], self.slicingObj[:, 1], self.slicingObj[:, 2], s=[0.1], label='spline cloud')
         volumeChart.set_xlabel('x (mm)')
         volumeChart.set_ylabel('y (mm)')
         volumeChart.set_zlabel('z (mm)')
