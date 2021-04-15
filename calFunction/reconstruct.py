@@ -6,6 +6,7 @@ from . import mathTools
 from . import segmentation
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plot
+import plotly.graph_objects as go
 
 plot.style.use('seaborn-darkgrid')
 
@@ -283,8 +284,8 @@ class ObjReconstruction:
                 # sA = ((self.sliceModelArea[i, 1] + self.sliceModelArea[i-1, 1])/2) * (self.sliceModelArea[i, 0] - self.sliceModelArea[i-1, 0]) + (
                 #     self.sliceModelArea[0, 1]/2) * self.totalLength + (self.sliceModelArea[self.loop-1, 1]/2) * self.totalLength
                 # self.objVolume = self.objVolume + sA
-
-        print(self.objVolume/1000.0)
+        self.objVolume = round(self.objVolume / 1000, 2)
+        print(self.objVolume)
         self.slicingObj = np.vstack(
             [self.sliceSplineX, self.sliceSplineY, self.sliceSplineZ]).T
 
@@ -387,14 +388,38 @@ class ObjReconstruction:
 
         figPointCloud.show()
 
-    def volumeChart(self):
-        figVolume = plot.figure()
-        volumeChart = plot.axes(projection='3d')
-        volumeChart.scatter(
-            self.slicingObj[:, 0], self.slicingObj[:, 1], self.slicingObj[:, 2], s=[0.1], label='spline cloud')
-        volumeChart.set_xlabel('x (mm)')
-        volumeChart.set_ylabel('y (mm)')
-        volumeChart.set_zlabel('z (mm)')
-        volumeChart.legend()
+    def volumeChart(self, processTime):
+        processTime = round(processTime, 3)
+        # figVolume = plot.figure()
+        # volumeChart = plot.axes(projection='3d')
+        # volumeChart.scatter(
+        #     self.slicingObj[:, 0], self.slicingObj[:, 1], self.slicingObj[:, 2], s=[0.1], label='spline cloud')
+        # volumeChart.set_xlabel('x (mm)')
+        # volumeChart.set_ylabel('y (mm)')
+        # volumeChart.set_zlabel('z (mm)')
+        # volumeChart.legend()
 
-        figVolume.show()
+        # figVolume.show()
+        fig = go.Figure(data=[go.Scatter3d(x=self.slicingObj[:, 0], y=self.slicingObj[:, 1], z=self.slicingObj[:, 2],
+                                           mode='markers',
+                                           marker=dict(
+            size=2,
+            # set color to an array/list of desired values
+            color=self.slicingObj[:, 1],
+            colorscale='Viridis',   # choose a colorscale
+            opacity=0.8
+        ))])
+
+        fig.update_layout(
+            autosize=True,
+            width=1800,
+            height=1000,
+            scene=dict(xaxis=dict(title='length (mm)'), yaxis=dict(title='width (mm)'), zaxis=dict(title='height (mm)'),
+                       aspectratio=dict(x=1.5, y=0.8, z=0.25)
+                       ),
+            title_text=(
+                f'Volume estimate : {self.objVolume} cm^3 with computation time : {processTime}s on 6k resolution'),
+            title_font_color="red",
+            title_font_size=24,
+        )
+        fig.show()

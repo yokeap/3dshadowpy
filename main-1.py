@@ -76,7 +76,7 @@ print("processed time = ", (end - start), "s")
 # objReconstruct.imgChart_3d()
 # objReconstruct.worldChart_3d()
 # objReconstruct.pointCloudChart_3d()
-# objReconstruct.volumeChart()
+objReconstruct.volumeChart(end - start)
 
 
 cv2.waitKey(0)
