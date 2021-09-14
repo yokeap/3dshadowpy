@@ -1,43 +1,19 @@
 
-from calFunction import segmentation
+from calFunction import segmentation, reconstruct
+from mpl_toolkits import mplot3d
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize
+import matplotlib.pyplot as plot
 import time
 # import sys
 # sys.path.append('./calFunction')
 debug = True
 
-
-def reconstruct(imgBin):
-    # median filter was used to expand and fill some hole
-    imgBin = cv2.medianBlur(imgBin, 9)
-    if debug == True:
-        cv2.imshow("Median Filtering", imgBin)
-    imgSkeleton = skeletonize(imgBin, method='lee')
-    return imgSkeleton
-
-
-def skeleton(imgBin):
-    element = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
-    done = False
-    size = np.size(imgBin)
-    skel = np.zeros_like(imgBin)
-    while(not done):
-        eroded = cv2.erode(imgBin, element)
-        temp = cv2.dilate(eroded, element)
-        temp = cv2.subtract(imgBin, temp)
-        skel = cv2.bitwise_or(skel, temp)
-        imgBin = eroded.copy()
-
-        zeros = size - cv2.countNonZero(imgBin)
-        if zeros == size:
-            done = True
-    return skel
-
-
 # start timer
 start = time.time()
+
+scale = 0.2  # percent of original size
 
 homographyMatrix = np.array([
     [5.079053647431133e-06, -5.475219832828209e-04, 0.224511299503042],
@@ -50,44 +26,58 @@ virLightPos = np.array(
 virLightPosIMG = np.array(
     [2.907071993662571e+03, -2.682554285912778e+03, 2.164641969419283e+02])
 
-imgBg = cv2.imread('./sample-image/bg.JPG')
-imgSample = cv2.imread('./sample-image/fish.JPG')
+
+# homographyMatrix = homographyMatrix * scale
+
+# virLightPos = virLightPos * scale
+virLightPosIMG = virLightPosIMG * scale
+
+imgBg = cv2.imread('./sample-image/bg-1.JPG')
+imgSample = cv2.imread('./sample-image/fish-1.JPG')
+
 height, width, channels = imgSample.shape
+height = int(height * scale)
+width = int(width * scale)
+imgBg = cv2.resize(imgBg, (width, height))
+imgSample = cv2.resize(imgSample, (width, height))
 imgBlack = np.zeros([height, width, 1], dtype=np.uint8)
 imgContour = np.zeros_like(imgSample)
 
-
 # pre-processing image procedure
+# output is only object and shadow in binary
 diffImage = cv2.cvtColor(imgSample, cv2.COLOR_BGR2GRAY) - \
     cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
 # diffImage = cv2.bitwise_not(diffImage)
 if debug == True:
     cv2.imshow("Subtract Image", diffImage)
-# cv2.imshow("Subtract Image 2", diffImage_2)
-
-# medianFilt = cv2.medianBlur(diffImage, 9)
-# cv2.imshow("Median Filtering", medianFilt)
-# # diffImage = cv2.bitwise_not(diffImage)
-# opening = cv2.morphologyEx(diffImage, cv2.MORPH_OPEN,
-#                            np.ones((5, 5), np.uint8))
-# opening = cv2.bitwise_not(opening)
-# white = cv2.bitwise_not(imgBlack)
-# opening = cv2.bitwise_and(opening, white)
-# opening[np.where(opening == [255])] = 0
-# if debug == True:
-#     cv2.imshow("Morphology", opening)
 ret, diffImageBW = cv2.threshold(diffImage, 240, 255, cv2.THRESH_BINARY_INV)
 if debug == True:
     cv2.imshow("Binary", diffImageBW)
-# imgObj = segmentation.obj(imgSample, diffImageBW)
-# cv2.imshow("Object Image", imgObj)
-# imgShadow = segmentation.shadow(diffImageBW, imgObj)
-# cv2.imshow("Shadow Image", imgShadow)
+imgAnd = cv2.bitwise_and(diffImageBW, diffImage)
+if debug == True:
+    cv2.imshow("Image And", imgAnd)
+ret, imgBin = cv2.threshold(imgAnd, 50, 255, cv2.THRESH_BINARY)
+imgOpening = cv2.morphologyEx(imgBin, cv2.MORPH_OPEN,
+                              np.ones((3, 3), np.uint8))
+imgOpening = cv2.medianBlur(imgOpening, 9)
+if debug == True:
+    cv2.imshow("Morphology", imgOpening)
 
-# imgReconstruct = reconstruct(imgObj)
-# cv2.imshow("Skeleton Image", imgReconstruct)
+objReconstruct = reconstruct.ObjReconstruction(
+    imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos, scale)
+objReconstruct.reconstruct()
+objReconstruct.reconstructVolume(0.05)
+
 
 end = time.time()
 print("processed time = ", (end - start), "s")
+
+
+# objReconstruct.imgChart_3d()
+# objReconstruct.worldChart_3d()
+# objReconstruct.pointCloudChart_3d()
+objReconstruct.volumeChart(end - start)
+
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
