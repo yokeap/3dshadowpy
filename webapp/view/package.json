@@ -1,0 +1,11 @@
+{
+  "name": "rayvol",
+  "version": "1.0.0",
+  "description": "Frontend for RayVol",
+  "main": "index.js",
+  "author": "S.Siwakorn",
+  "license": "MIT",
+  "dependencies": {
+    "bootstrap": "^5.1.3"
+  }
+}

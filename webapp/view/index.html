@@ -1,0 +1,184 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="./view/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="./view/static/css/main.css">
+    <title>RayVol Beta 1</title>
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <h1 class="text-white">RayVol Beta 1</h1>
+        </div>
+
+        <div class="row">
+            <!-- <div class="col-8">
+                <img src="./view/static/img/mock.jpg" alt="test" style="width: 1024px; height: 768px;">
+                <img src="./view/static/img/mock.jpg" alt="test" style="max-width: 100%;">
+            </div>
+            <div class="col-4">
+                <label for="customRange1" class="form-label">Example range</label>
+                <input type="range" class="form-range" min="0" max="255" id="slider1">
+            </div> -->
+
+            <div class="d-flex flex-row">
+                <div class="d-flex flex-column" style="height: 768px; width: 1024px; overflow-y: scroll;">
+                    <img id="img-raw" src="{{ url_for('video_feed') }}" alt="test" style="max-width: 100%;">
+                    <img id="img-3d-result" src="./view/static/img/mock.jpg" alt="test" style="max-width: 100%; display: none;">
+                    <img id="img-subtractBg" src="{{ url_for('subtract_background') }}" alt="test"
+                        style="max-width: 100%; display: none;">
+                    <img id="img-binary" src="./view/static/img/mock.jpg" alt="test"
+                        style="max-width: 100%; display: none;">
+                    <img id="img-and" src="./view/static/img/mock.jpg" alt="test"
+                        style="max-width: 100%; display: none;">
+                    <img id="img-morphology" src="./view/static/img/mock.jpg" alt="test"
+                        style="max-width: 100%; display: none;">
+                    <img id="img-resultSegment" src="./view/static/img/mock.jpg" alt="test"
+                        style="max-width: 100%; display: none;">
+                    <img id="img-obj" src="./view/static/img/mock.jpg" alt="test"
+                        style="max-width: 100%; display: none;">
+                    <img id="img-shadow" src="./view/static/img/mock.jpg" alt="test"
+                        style="max-width: 100%; display: none;">
+                </div>
+
+                <div class="d-flex flex-column">
+
+                    <div class="d-flex flex-column px-5" style="width: 350px">
+
+                        <!-- Subtract Bitwise Threshold -->
+                        <div class="row border-bottom pt-4">
+                            <span class="text-white">View Setting (Top down process)</span>
+                        </div>
+
+                        <div class="d-flex flex-column pt-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtRawImage"
+                                    onchange="swtRawImage_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Raw
+                                    Image</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtSubtractBackground"
+                                    onchange="swtSubtractBackground_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Subtract
+                                    Background Image</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtBinaryImage"
+                                    onchange="swtBinaryImage_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Binary
+                                    Image</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtAndImage"
+                                    onchange="swtAndImage_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">And
+                                    Operator</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtMorphology"
+                                    onchange="swtMorphology_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Morphology
+                                    Result</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtObjResultSegment"
+                                    onchange="swtObjResultSegment_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Segmentation
+                                    Result</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtObjImage"
+                                    onchange="swtObjImage_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Object
+                                    Extraction</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="swtShadowImage"
+                                    onchange="swtShadowImage_onChange()">
+                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Shadow
+                                    Extraction</label>
+                            </div>
+                        </div>
+
+
+                        <!-- Subtract Bitwise Threshold -->
+                        <div class="row border-bottom pt-4">
+                            <span class="text-white">Sub Bitwise Threshold</span>
+                        </div>
+
+                        <div class="row pt-2">
+                            <div class="col-8">
+                                <input type="range" class="form-range align-middle" min="0" max="255" id="subTreshVal">
+                            </div>
+                            <div class="col-4">
+                                <input type="text" id="subTreshValText" class="inputTextBox">
+                            </div>
+                        </div>
+
+                        <!-- Object and Shadow Threshold -->
+                        <div class="row border-bottom pt-4">
+                            <span class="text-white">Obj and Shadow Treshold</span>
+                        </div>
+
+                        <div class="row pt-2">
+                            <div class="col-8">
+                                <input type="range" class="form-range align-middle" min="0" max="255"
+                                    id="objShadowTreshVal">
+                            </div>
+                            <div class="col-4">
+                                <input type="text" id="objShadowTreshValText" class="inputTextBox">
+                            </div>
+                        </div>
+
+                        <!-- Median Blur -->
+                        <div class="row border-bottom pt-4">
+                            <span class="text-white">Median Blur</span>
+                        </div>
+
+                        <div class="row pt-2">
+                            <div class="col-8">
+                                <input type="range" class="form-range align-middle" min="0" max="15" id="medBlurVal">
+                            </div>
+                            <div class="col-4">
+                                <input type="text" id="medBlurValText" class="inputTextBox">
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-around border-top pt-3">
+                            <button type="button" class="btn btn-primary" onclick="saveCapture()" style="width: 30%;">Capture</button>
+                        </div>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function postjsonServ(value) {
+            var req = new XMLHttpRequest();
+            req.open('POST', "/requests", true);
+            req.setRequestHeader('content-type', 'application/json');
+            req.onload = function (e) {
+                if (req.readyState === 4 && req.status === 200) {
+                    var JSON_received = JSON.parse(xhr.responseText);
+                    //handle received JSON here
+                } else {
+                    console.log(req.responseText);
+                }
+            };
+            // req.send(id + "=" + value);
+            req.send(JSON.stringify(value));
+        }
+
+    </script>
+    <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    <script src="./view/static/js/script.js"></script>
+</body>
+
+</html>
