@@ -1,7 +1,7 @@
 import cv2
-import threading
 import datetime
 import time
+import threading
 import os
 import sys
 import numpy as np
@@ -31,9 +31,66 @@ from . import segmentation
 # 18. CV_CAP_PROP_RECTIFICATION Rectification flag for stereo cameras (note: only supported by DC1394 v 2.x backend currently
 
 
-class camgrab:
+try:
+    from greenlet import getcurrent as get_ident
+except ImportError:
+    try:
+        from thread import get_ident
+    except ImportError:
+        from _thread import get_ident
 
+class CameraEvent(object):
+    """An Event-like class that signals all active clients when a new frame is
+    available.
+    """
+    def __init__(self):
+        self.events = {}
+
+    def wait(self):
+        """Invoked from each client's thread to wait for the next frame."""
+        ident = get_ident()
+        if ident not in self.events:
+            # this is a new client
+            # add an entry for it in the self.events dict
+            # each entry has two elements, a threading.Event() and a timestamp
+            self.events[ident] = [threading.Event(), time.time()]
+        return self.events[ident][0].wait()
+
+    def set(self):
+        """Invoked by the camera thread when a new frame is available."""
+        now = time.time()
+        remove = None
+        for ident, event in self.events.items():
+            if not event[0].isSet():
+                # if this client's event is not set, then set it
+                # also update the last set timestamp to now
+                event[0].set()
+                event[1] = now
+            else:
+                # if the client's event is already set, it means the client
+                # did not process a previous frame
+                # if the event stays set for more than 5 seconds, then assume
+                # the client is gone and remove it
+                if now - event[1] > 5:
+                    remove = ident
+        if remove:
+            del self.events[remove]
+
+    def clear(self):
+        """Invoked from each client's thread after a frame was processed."""
+        self.events[get_ident()][0].clear()
+
+class Camera:
+    thread = {}  # background thread that reads frames from camera
+    frame = {}  # current frame is stored here by background thread
+    last_access = {}  # time of last client access to the camera
+    event = {}
+    running = {}
     def __init__(self, config):
+        Camera.event = CameraEvent()
+        Camera.running = True
+
+
         self.cap = cv2.VideoCapture(0)
         self.setConfigDefault(config)
         self.imgBg = cv2.imread("./ref/background.jpg")
@@ -44,10 +101,6 @@ class camgrab:
 
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
-
-        # self.gen_frames()
-        # self.threadRawFeed = threading.Thread(target=self.thread_raw_feed)
-        # self.threadProcessFeed = threading.Thread(target=self.thread_process_feed)
 
     def setConfigDefault(self, config):
         if not self.cap.isOpened():
@@ -81,7 +134,7 @@ class camgrab:
         loadConfig['brightness'] = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
         loadConfig['contrast'] = self.cap.get(cv2.CAP_PROP_CONTRAST)
         loadConfig['hue'] = self.cap.get(cv2.CAP_PROP_HUE)
-        loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION) + 64
+        loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION) +64
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
         return loadConfig
 
@@ -89,53 +142,41 @@ class camgrab:
         while True:
             if self.cap != 0:
                 success, self.frame = self.cap.read()
-                self.success = success
                 if success:
-                    self.success = False
                     # frame=cv2.flip(frame,1)
                     # if camOpen == False:
                     #     break
-                    self.diffImage = cv2.cvtColor(
-                        self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
-                    # self.diffImage = cv2.absdiff(cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY), cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY))
-                    ret, self.imgDiffBin = cv2.threshold(
-                        self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
-                    self.imgAnd = cv2.bitwise_and(
-                        self.imgDiffBin, self.diffImage)
-                    ret, self.imgBin = cv2.threshold(
-                        self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
-                    self.imgOpening = cv2.morphologyEx(
-                        self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-                    self.imgOpening = cv2.medianBlur(
-                        self.imgOpening, self.medianBlur)
+                    self.diffImage = cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
+                    ret, self.imgDiffBin = cv2.threshold(self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
+                    self.imgAnd = cv2.bitwise_and(self.imgDiffBin, self.diffImage)
+                    ret, self.imgBin = cv2.threshold(self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
+                    self.imgOpening = cv2.morphologyEx(self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+                    self.imgOpening = cv2.medianBlur(self.imgOpening, self.medianBlur)
                     self.imgSegmentBin, posCrop = segmentation.objShadow(
                         self.frame, self.imgOpening)
-
-                    for crop in posCrop:
-                        if not crop[0] < 1 or crop[1] < 1:
-                            cv2.rectangle(self.imgSegmentBin, (crop[0], crop[1]), (
-                                crop[0]+crop[2], crop[1]+crop[3]), (255, 255, 255), 2)
-                    # cv2.rectangle(self.imgSegmentBin, (crop[1], crop[2]), (crop[1]+crop[3], crop[2]+crop[4]), (0, 255, 0), 2)
-                    # print(crop)
                     try:
-                        if self.feedStatus == "rawImage":
-                            ret, buffer = cv2.imencode('.jpg', self.frame)
-                        elif self.feedStatus == "subtractBackground":
-                            ret, buffer = cv2.imencode('.jpg', self.diffImage)
-                        elif self.feedStatus == "binaryImage":
-                            ret, buffer = cv2.imencode('.jpg', self.imgDiffBin)
-                        elif self.feedStatus == "andImage":
-                            ret, buffer = cv2.imencode('.jpg', self.imgAnd)
-                        elif self.feedStatus == "morphologyImage":
-                            ret, buffer = cv2.imencode('.jpg', self.imgOpening)
-                        elif self.feedStatus == "segmentImage":
-                            ret, buffer = cv2.imencode(
-                                '.jpg', self.imgSegmentBin)
-                        else:
-                            ret, buffer = cv2.imencode('.jpg', self.frame)
-                        frameByte = buffer.tobytes()
+                        # ret, buffer = cv2.imencode('.jpg', frame)
+                        # if self.feedStatus == "rawImage":
+                        #     ret, buffer = cv2.imencode('.jpg', self.frame)
+                        # elif self.feedStatus == "subtractBackground":
+                        #     ret, buffer = cv2.imencode('.jpg', self.diffImage)
+                        # elif self.feedStatus == "binaryImage":
+                        #     ret, buffer = cv2.imencode('.jpg', self.imgDiffBin)
+                        # elif self.feedStatus == "andImage":
+                        #     ret, buffer = cv2.imencode('.jpg', self.imgAnd)
+                        # elif self.feedStatus == "morphologyImage":
+                        #     ret, buffer = cv2.imencode('.jpg', self.imgOpening)
+                        # elif self.feedStatus == "segmentImage":
+                        #     ret, buffer = cv2.imencode('.jpg', self.imgSegmentBin)
+                        # else:
+                        #     ret, buffer = cv2.imencode('.jpg', self.frame)
+                        ret, rawBuffer = cv2.imencode('.jpg', self.frame)
+                        ret, diffImagebuffer = cv2.imencode('.jpg', self.diffImage)
+                        rawFrameByte = rawBuffer.tobytes()
+                        diffImageframeByte = diffImagebuffer.tobytes()
                         yield (b'--frame\r\n'
-                               b'Content-Type: image/jpeg\r\n\r\n' + frameByte + b'\r\n')
+                            b'Content-Type: image/jpeg\r\n\r\n' + rawFrameByte + b'\r\n'), (b'--frame\r\n'
+                            b'Content-Type: image/jpeg\r\n\r\n' + diffImageframeByte + b'\r\n')
                         # return frameByte
                     except Exception as e:
                         pass
@@ -144,38 +185,18 @@ class camgrab:
             else:
                 pass
 
-    # def thread_raw_feed(self):
-    #     while True:
-    #         if self.success:
-    #             ret, buffer = cv2.imencode('.jpg', self.frame)
-    #             yield (b'--frame\r\n'
-    #                 b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-    #         else:
-    #             pass
-
-    # def thread_process_feed(self):
-    #     while True:
-    #         if self.success:
-    #             ret, buffer = cv2.imencode('.jpg', self.diffImage)
-    #             yield (b'--frame\r\n'
-    #                 b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-    #         else:
-    #             pass
-
     def shotSetting(self):
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
         now = datetime.datetime.now()
-        p = os.path.sep.join(
-            ['shots', "shot_{}.jpg".format(str(now).replace(":", ''))])
+        p = os.path.sep.join(['shots', "shot_{}.jpg".format(str(now).replace(":",''))])
         cv2.imwrite(p, self.frame)
 
     def captureAll(self):
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
         now = datetime.datetime.now()
-        p = os.path.sep.join(
-            ['./capture/', "{}".format(str(now).replace(":", ''))])
+        p = os.path.sep.join(['./capture/', "{}".format(str(now).replace(":",''))])
         try:
             os.mkdir(p)
         except OSError as error:
@@ -188,7 +209,7 @@ class camgrab:
         cv2.imwrite(os.path.join(p, "imgBin.jpg"), self.imgBin)
         cv2.imwrite(os.path.join(p, "imgopening.jpg"), self.imgOpening)
         cv2.imwrite(os.path.join(p, "imgsegment.jpg"), self.imgSegmentBin)
-
+    
     def camRelease(self):
         self.cap.release()
 

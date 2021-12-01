@@ -1,11 +1,11 @@
 {
     "width": 1600,
     "height": 1200,
-    "exposure": -6,
+    "exposure": -7,
     "brightness": 0,
-    "contrast": 32,
+    "contrast": 0,
     "hue": 0,
-    "saturation": 64,
+    "saturation": 128,
     "sharpness": 3,
     "default": {
         "width": 1600,
@@ -16,5 +16,9 @@
         "hue": 0,
         "saturation": 64,
         "sharpness": 3
-    }
-  }
+    },
+    "imgDiffBinTreshold": 250,
+    "imgAndBinTreshold": 50,
+    "medianBlur": 9,
+    "event": "loaded"
+}

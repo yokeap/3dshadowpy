@@ -5,6 +5,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="./view/node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"></script>
     <link rel="stylesheet" href="./view/static/css/main.css">
     <title>RayVol Beta 1</title>
 </head>
@@ -27,137 +29,149 @@
 
             <div class="d-flex flex-row">
                 <div class="d-flex flex-column" style="height: 768px; width: 1024px; overflow-y: scroll;">
-                    <img id="img-raw" src="{{ url_for('video_feed') }}" alt="test" style="max-width: 100%;">
-                    <img id="img-3d-result" src="./view/static/img/mock.jpg" alt="test" style="max-width: 100%; display: none;">
-                    <img id="img-subtractBg" src="{{ url_for('subtract_background') }}" alt="test"
-                        style="max-width: 100%; display: none;">
-                    <img id="img-binary" src="./view/static/img/mock.jpg" alt="test"
-                        style="max-width: 100%; display: none;">
-                    <img id="img-and" src="./view/static/img/mock.jpg" alt="test"
-                        style="max-width: 100%; display: none;">
-                    <img id="img-morphology" src="./view/static/img/mock.jpg" alt="test"
-                        style="max-width: 100%; display: none;">
-                    <img id="img-resultSegment" src="./view/static/img/mock.jpg" alt="test"
-                        style="max-width: 100%; display: none;">
-                    <img id="img-obj" src="./view/static/img/mock.jpg" alt="test"
-                        style="max-width: 100%; display: none;">
-                    <img id="img-shadow" src="./view/static/img/mock.jpg" alt="test"
-                        style="max-width: 100%; display: none;">
+                    <img id="img-stream" src="{{ url_for('video_feed') }}" alt="test" style="max-width: 100%;">
                 </div>
 
-                <div class="d-flex flex-column">
-
-                    <div class="d-flex flex-column px-5" style="width: 350px">
-
-                        <!-- Subtract Bitwise Threshold -->
-                        <div class="row border-bottom pt-4">
-                            <span class="text-white">View Setting (Top down process)</span>
-                        </div>
-
-                        <div class="d-flex flex-column pt-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtRawImage"
-                                    onchange="swtRawImage_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Raw
-                                    Image</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtSubtractBackground"
-                                    onchange="swtSubtractBackground_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Subtract
-                                    Background Image</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtBinaryImage"
-                                    onchange="swtBinaryImage_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Binary
-                                    Image</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtAndImage"
-                                    onchange="swtAndImage_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">And
-                                    Operator</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtMorphology"
-                                    onchange="swtMorphology_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Morphology
-                                    Result</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtObjResultSegment"
-                                    onchange="swtObjResultSegment_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Segmentation
-                                    Result</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtObjImage"
-                                    onchange="swtObjImage_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Object
-                                    Extraction</label>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" role="switch" id="swtShadowImage"
-                                    onchange="swtShadowImage_onChange()">
-                                <label class="form-check-label text-white" for="flexSwitchCheckDefault">Shadow
-                                    Extraction</label>
-                            </div>
-                        </div>
-
-
-                        <!-- Subtract Bitwise Threshold -->
-                        <div class="row border-bottom pt-4">
-                            <span class="text-white">Sub Bitwise Threshold</span>
-                        </div>
-
-                        <div class="row pt-2">
-                            <div class="col-8">
-                                <input type="range" class="form-range align-middle" min="0" max="255" id="subTreshVal">
-                            </div>
-                            <div class="col-4">
-                                <input type="text" id="subTreshValText" class="inputTextBox">
-                            </div>
-                        </div>
-
-                        <!-- Object and Shadow Threshold -->
-                        <div class="row border-bottom pt-4">
-                            <span class="text-white">Obj and Shadow Treshold</span>
-                        </div>
-
-                        <div class="row pt-2">
-                            <div class="col-8">
-                                <input type="range" class="form-range align-middle" min="0" max="255"
-                                    id="objShadowTreshVal">
-                            </div>
-                            <div class="col-4">
-                                <input type="text" id="objShadowTreshValText" class="inputTextBox">
-                            </div>
-                        </div>
-
-                        <!-- Median Blur -->
-                        <div class="row border-bottom pt-4">
-                            <span class="text-white">Median Blur</span>
-                        </div>
-
-                        <div class="row pt-2">
-                            <div class="col-8">
-                                <input type="range" class="form-range align-middle" min="0" max="15" id="medBlurVal">
-                            </div>
-                            <div class="col-4">
-                                <input type="text" id="medBlurValText" class="inputTextBox">
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-around border-top pt-3">
-                            <button type="button" class="btn btn-primary" onclick="saveCapture()" style="width: 30%;">Capture</button>
-                        </div>
-
-
+                <div class="d-flex flex-column" >
+                    <div class="row">
+                        <div class="chart" id="hue" style="max-width: 300px; height: 200px">
+                            <script>
+                                var graphs = {{ plot | safe}};
+                                Plotly.plot('bargraph', graphs, {});
+                            </script>
                     </div>
+                    
+                </div>
+
+            </div>
+
+            <div class="d-flex flex-column">
+
+                <div class="d-flex flex-column px-5" style="width: 350px">
+
+                    <!-- Subtract Bitwise Threshold -->
+                    <div class="row border-bottom pt-4">
+                        <span class="text-white">View Setting (Top down process)</span>
+                    </div>
+
+                    <div class="d-flex flex-column pt-3">
+                        <div class="btn-group-vertical" role="group" name="radioGroup"
+                            aria-label="Basic radio toggle button group">
+
+                            <input class="btn-check" type="radio" name="btnradio" value="rawImage" id="swtRawImage"
+                                autocomplete="off" checked>
+                            <label class="btn btn-outline-primary text-white" for="swtRawImage">RawImage</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="subtractBackground"
+                                id="swtSubtractBackground" autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtSubtractBackground">Subtract
+                                Background Image</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="binaryImage"
+                                id="swtBinaryImage" autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtBinaryImage">Binary Image</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="andImage" id="swtAndImage"
+                                autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtAndImage">And Operator</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="morphologyImage"
+                                id="swtMorphology" autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtMorphology">Morphology
+                                Result</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="segmentImage"
+                                id="swtObjResultSegment" autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtObjResultSegment">Segmentation
+                                Result</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="objImage" id="swtObjImage"
+                                autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtObjImage">Object
+                                Extraction</label>
+
+                            <input class="btn-check" type="radio" name="btnradio" value="shadowImage"
+                                id="swtShadowImage" autocomplete="off">
+                            <label class="btn btn-outline-primary text-white" for="swtShadowImage">Shadow
+                                Extraction</label>
+                        </div>
+                    </div>
+
+                    <!-- Subtact Binary Threshold -->
+                    <div class="row border-bottom pt-4">
+                        <span class="text-white">Subtact Binary Threshold</span>
+                    </div>
+
+                    <div class="row pt-2">
+                        <div class="col-8">
+                            <input type="range" class="form-range align-middle" min="0" max="255" id="subTreshVal">
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="subTreshValText" class="inputTextBox">
+                        </div>
+                    </div>
+
+                    <!-- ImageAnd binary Threshold -->
+                    <div class="row border-bottom pt-4">
+                        <span class="text-white">ImageAnd Binary Threshold</span>
+                    </div>
+
+                    <div class="row pt-2">
+                        <div class="col-8">
+                            <input type="range" class="form-range align-middle" min="0" max="255" id="imgAndTreshVal">
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="imgAndTreshValText" class="inputTextBox">
+                        </div>
+                    </div>
+
+                    <!-- Median Blur -->
+                    <div class="row border-bottom pt-4">
+                        <span class="text-white">Median Blur</span>
+                    </div>
+
+                    <div class="row pt-2 ">
+                        <div class="col-8">
+                            <input type="range" class="form-range align-middle" min="0" max="15" value="9"
+                                id="medBlurVal">
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="medBlurValText" class="inputTextBox">
+                        </div>
+                    </div>
+
+                    <!-- Object and Shadow Threshold -->
+                    <div class="row border-bottom pt-4">
+                        <span class="text-white">Obj and Shadow Treshold</span>
+                    </div>
+
+                    <div class="row pt-2 pb-4">
+                        <div class="col-8">
+                            <input type="range" class="form-range align-middle" min="0" max="255"
+                                id="objShadowTreshVal">
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="objShadowTreshValText" class="inputTextBox">
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-row border-top pt-1 justify-content-between">
+                        <div class="d-flex justify-content-around ">
+                            <button type="button" class="btn btn-primary" onclick="saveParams()">Save
+                                Parameters</button>
+                        </div>
+
+                        <div class="d-flex justify-content-around">
+                            <button type="button" class="btn btn-primary" onclick="saveCapture()">Capture</button>
+                        </div>
+                    </div>
+
+
+
                 </div>
             </div>
         </div>
+    </div>
     </div>
     <script>
         function postjsonServ(value) {
@@ -166,7 +180,7 @@
             req.setRequestHeader('content-type', 'application/json');
             req.onload = function (e) {
                 if (req.readyState === 4 && req.status === 200) {
-                    var JSON_received = JSON.parse(xhr.responseText);
+                    // var JSON_received = JSON.parse(req.responseText);
                     //handle received JSON here
                 } else {
                     console.log(req.responseText);
@@ -178,6 +192,7 @@
 
     </script>
     <script src="./node_modules/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    <script src="./view/static/js/plot.js"></script>
     <script src="./view/static/js/script.js"></script>
 </body>
 

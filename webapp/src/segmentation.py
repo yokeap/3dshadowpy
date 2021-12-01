@@ -24,17 +24,23 @@ def draw_angled_rec(x0, y0, width, height, angle, img):
     cv2.line(img, pt3, posOrigin, (0, 0, 255), 1)
     return img
 
-
-def obj(imgSample, imgOpening):
+def objShadow(imgSample, imgOpening):
+    x = 0
+    y = 0
+    w = 0
+    h = 0
+    boudingRect = []
     contours, hierarchy = cv2.findContours(
         imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    if len(contours) != 0:
+    for contour in contours:
         # find the biggest area of the contour
-        big_contour = max(contours, key=cv2.contourArea)
+        # big_contour = max(contours, key=cv2.contourArea)
         # draw filled contour on black background
-        # imgMask = np.zeros_like(imgSample)
-        # cv2.drawContours(imgMask, [big_contour], 0, (255, 255, 255), -1)
-        x, y, w, h = cv2.boundingRect(big_contour)
+        # imgFill = np.zeros_like(imgSample)
+        # cv2.drawContours(imgFill, [contour], 0, (255, 255, 255), -1)
+        (x, y, w, h) = cv2.boundingRect(contour)
+        # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        boudingRect.append([x, y, w, h])
 
     # height, width, channel = imgSample.shape
     imgMaskRGB = np.zeros_like(imgSample)
@@ -44,10 +50,19 @@ def obj(imgSample, imgOpening):
     # apply Opening to input image
     # Create a green screen image (background color is used to seperated the object).
     # ie. apple used green screen, mango used red screen.
-    imgMaskOut = cv2.bitwise_and(imgSample, imgMaskRGB)
-    if debug == True:
-        cv2.imshow("Green Screen Openinging Result", imgMaskOut)
+    imgAnd = cv2.bitwise_and(imgSample, imgMaskRGB)
+    # for crop in posCrop:
+    #     if not crop[0] or crop[1]:
+    #         imgMaskout.append(imgAnd[y:y+h, x:x+w])
+    #         cv2.rectangle(imgAnd, (crop[0], crop[1]), (crop[0]+crop[2], crop[1]+crop[3]), (0, 0, 255), 2)
+    
+    return imgAnd, boudingRect
 
+def obj(imgMaskOut):
+    x = 0
+    y = 0
+    w = 0
+    h = 0
     # draw boundary box of objet
     # x, y, w, h = cv2.boundingRect(big_contour)
     # # draw the 'human' contour (in green)
@@ -108,16 +123,16 @@ def shadow(imgOpening, imgObj):
 
 def OpeningObj(img):
     # Define thresholds for channel 1 based on histogram settings
-    channel1Min = 0.189 * 255
-    channel1Max = 0.522 * 255
+    channel1Min = 0.213
+    channel1Max = 0.546
 
     # Define thresholds for channel 2 based on histogram settings
-    channel2Min = 0.209 * 255
-    channel2Max = 1.000 * 255
+    channel2Min = 0.421
+    channel2Max = 1.000
 
     # Define thresholds for channel 3 based on histogram settings
-    channel3Min = 0.157 * 255
-    channel3Max = 1.000 * 255
+    channel3Min = 0.000
+    channel3Max = 1.000
 
     imgOpeninged = np.zeros_like(img)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)

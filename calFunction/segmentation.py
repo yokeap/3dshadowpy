@@ -24,7 +24,6 @@ def draw_angled_rec(x0, y0, width, height, angle, img):
     cv2.line(img, pt3, posOrigin, (0, 0, 255), 1)
     return img
 
-
 def obj(imgSample, imgOpening):
     contours, hierarchy = cv2.findContours(
         imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)

@@ -2,141 +2,128 @@ var subTreshVal = document.getElementById("subTreshVal"),
     subTreshValText = document.getElementById("subTreshValText");
 
 var jsonData = {
-    subtractThesholdVal: subTreshVal.value,
+    imgDiffBinTreshold: parseInt(subTreshVal.value),
+    imgAndBinTreshold: parseInt(imgAndTreshVal.value),
+    medianBlur: parseInt(medBlurVal.value),
+    objShadowTresholdVal: parseInt(objShadowTreshVal.value),
     browserEvent: "normal",
-    feedStatus: {
-        subtractBackground: false
-    }
+    feedStatus: "rawImage"
 };
 
-// Background Subtract Threshold
-subTreshVal.oninput = function () {
-    // postServ('/requests', 'subTreshVal', subTreshVal.value);
-    jsonData.subtractThesholdVal = subTreshVal.value;
-    subTreshValText.value = subTreshVal.value;
-    postjsonServ(jsonData);
-}
-subTreshValText.oninput = function () {
-    subTreshVal.value = subTreshValText.value;
-}
+// // Background Subtract Threshold
+// subTreshVal.oninput = function () {
+//     // postServ('/requests', 'subTreshVal', subTreshVal.value);
+//     jsonData.subtractThesholdVal = subTreshVal.value;
+//     subTreshValText.value = subTreshVal.value;
+//     postjsonServ(jsonData);
+// }
+// subTreshValText.oninput = function () {
+//     subTreshVal.value = subTreshValText.value;
+// }
 
-// Object Shadow Threshold
-var objShadowTreshVal = document.getElementById("objShadowTreshVal"),
-    objShadowTreshValText = document.getElementById("objShadowTreshValText");
+// // Median Blur
+// var medBlurVal = document.getElementById("medBlurVal"),
+//     medBlurValText = document.getElementById("medBlurValText");
 
-objShadowTreshVal.oninput = function () {
-    // postServ('/requests', 'subTreshVal', objShadowTreshVal.value);
-    objShadowTreshValText.value = objShadowTreshVal.value;
-}
-objShadowTreshValText.oninput = function () {
-    objShadowTreshVal.value = objShadowTreshValText.value;
-}
+// medBlurVal.oninput = function () {
+//     // postServ('/requests', 'subTreshVal', medBlurVal.value);
+//     medBlurValText.value = medBlurVal.value;
+// }
+// medBlurValText.oninput = function () {
+//     medBlurVal.value = medBlurValText.value;
+// }
 
-// Median Blur
-var medBlurVal = document.getElementById("medBlurVal"),
-    medBlurValText = document.getElementById("medBlurValText");
+// // Object Shadow Threshold
+// var objShadowTreshVal = document.getElementById("objShadowTreshVal"),
+//     objShadowTreshValText = document.getElementById("objShadowTreshValText");
 
-medBlurVal.oninput = function () {
-    // postServ('/requests', 'subTreshVal', medBlurVal.value);
-    medBlurValText.value = medBlurVal.value;
-}
-medBlurValText.oninput = function () {
-    medBlurVal.value = medBlurValText.value;
-}
+// objShadowTreshVal.oninput = function () {
+//     // postServ('/requests', 'subTreshVal', objShadowTreshVal.value);
+//     objShadowTreshValText.value = objShadowTreshVal.value;
+// }
+// objShadowTreshValText.oninput = function () {
+//     objShadowTreshVal.value = objShadowTreshValText.value;
+// }
 
-function swtRawImage_onChange() {
-    if (document.getElementById('swtRawImage').checked) {
-        document.getElementById("img-raw").style.display = 'block';
-    }
-    else {
-        document.getElementById("img-subtractBg").style.display = 'none';
-    }
-}
+var ranges = document.querySelectorAll('input[type=range]');
+ranges.forEach(
+    range => range.addEventListener('input', () => {
+            // console.log(range.id);
+            jsonData.browserEvent = "changeProcessVal";
+            if(range.id == "subTreshVal"){
+                subTreshValText.value = range.value;
+                jsonData.imgDiffBinTreshold = parseInt(range.value);
+            }
+            else if (range.id == "imgAndTreshVal"){
+                imgAndTreshValText.value = range.value;
+                jsonData.imgAndBinTreshold = parseInt(range.value);
+            }
+            else if (range.id == "medBlurVal"){
+                medBlurValText.value = range.value;
+                jsonData.medianBlur = parseInt(range.value);
+            }
+            else if (range.id == "objShadowTreshVal"){
+                objShadowTreshValText.value = range.value;
+                jsonData.objShadowTresholdVal = parseInt(range.value);
+            }
+            postjsonServ(jsonData);
+            jsonData.browserEvent = "normal";
+        }
+    )
+);
 
-function swtSubtractBackground_onChange() {
-    jsonData.browserEvent = "feedStatus"
-    if (document.getElementById('swtSubtractBackground').checked) {
-        document.getElementById("img-subtractBg").style.display = 'block';
+var texts = document.querySelectorAll('input[type=text]');
+texts.forEach(
+    text => text.addEventListener('input', () => {
+            // console.log(range.id);
+            jsonData.browserEvent = "changeProcessVal";
+            if(text.id == "subTreshValText"){
+                subTreshVal.value = text.value;
+                jsonData.imgDiffBinTreshold = parseInt(text.value);
+            }
+            else if (text.id == "imgAndTreshValText"){
+                imgAndTreshVal.value = text.value;
+                jsonData.imgAndBinTreshold = parseInt(text.value);
+            }
+            else if (text.id == "medBlurValText"){
+                medBlurVal.value = text.value;
+                jsonData.medianBlur = parseInt(text.value);
+            }
+            else if (text.id == "objShadowTreshValText"){
+                objShadowTreshVal.value = text.value;
+                jsonData.objShadowTresholdVal = parseInt(text.value);
+            }
+            postjsonServ(jsonData);
+            jsonData.browserEvent = "normal";
+        }
+    )
+);
 
-        jsonData.feedStatus.subtractBackground = true;
-    }
-    else {
-        document.getElementById("img-subtractBg").style.display = 'block';
-        jsonData.feedStatus.subtractBackground = false;
-    }
-    postjsonServ(jsonData);
-    jsonData.browserEvent = "normal"
-}
 
-function swtBinaryImage_onChange() {
-    if (document.getElementById('swtBinaryImage').checked) {
-        // push subtract background to img tag
-        document.getElementById("img-binary").style.display = 'block';
-    }
-    else {
-        // remove or hidden img tag
-        document.getElementById("img-binary").style.display = 'none';
-    }
-}
-
-function swtAndImage_onChange() {
-    if (document.getElementById('swtAndImage').checked) {
-        // push subtract background to img tag
-        document.getElementById("img-and").style.display = 'block';
-    }
-    else {
-        // remove or hidden img tag
-        document.getElementById("img-and").style.display = 'none';
-    }
-}
-
-function swtMorphology_onChange() {
-    if (document.getElementById('swtMorphology').checked) {
-        // push subtract background to img tag
-        document.getElementById("img-morphology").style.display = 'block';
-    }
-    else {
-        // remove or hidden img tag
-        document.getElementById("img-morphology").style.display = 'none';
-    }
-}
-
-function swtObjResultSegment_onChange() {
-    if (document.getElementById('swtObjResultSegment').checked) {
-        // push subtract background to img tag
-        document.getElementById("img-resultSegment").style.display = 'block';
-    }
-    else {
-        // remove or hidden img tag
-        document.getElementById("img-resultSegment").style.display = 'none';
-    }
-}
-
-function swtObjImage_onChange() {
-    if (document.getElementById('swtObjImage').checked) {
-        // push subtract background to img tag
-        document.getElementById("img-obj").style.display = 'block';
-    }
-    else {
-        // remove or hidden img tag
-        document.getElementById("img-obj").style.display = 'none';
-    }
-}
-
-function swtShadowImage_onChange() {
-    if (document.getElementById('swtShadowImage').checked) {
-        // push subtract background to img tag
-        document.getElementById("img-shadow").style.display = 'block';
-    }
-    else {
-        // remove or hidden img tag
-        document.getElementById("img-shadow").style.display = 'none';
-    }
-}
+var radios = document.querySelectorAll('input[type=radio]');
+radios.forEach(
+    radio => radio.addEventListener('change', () => {
+            // alert("radio.value");
+            // if(radio.value == "subtractBackground"){
+            //     jsonData.feedStatus.subtractBackground = ;
+            // }
+            jsonData.browserEvent = "changeFeed";
+            jsonData.feedStatus = radio.value;
+            postjsonServ(jsonData);
+            jsonData.browserEvent = "normal";
+        }
+    )
+);
 
 function saveCapture(){
     jsonData.browserEvent = "capture";
-    postjsonServ("/config", jsonData);
+    postjsonServ(jsonData);
+    jsonData.browserEvent = "normal";
+}
+
+function saveParams(){
+    jsonData.browserEvent = "params";
+    postjsonServ(jsonData);
     jsonData.browserEvent = "normal";
 }
 

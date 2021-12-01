@@ -1,51 +1,10 @@
-from flask import Flask, render_template, Response, request, send_from_directory, jsonify
-import plotly
-import plotly.graph_objs as go
-from src import camgrab
-from jsonmerge import merge
-import cv2
-import sys
-import json
-import time
-import pandas as pd
-import numpy as np
+from flask import Flask, render_template, Response, request, Blueprint, jsonify
 
-app = Flask(__name__, template_folder='./view', static_folder='./view')
-
-global config
-
-# load config
-with open('./config.json', 'r') as f:
-    config = json.load(f)
-
-camera = camgrab.camgrab(config)
-# time.sleep(5)
-# camera.gen_frames()
-
-def create_plot():
-
-
-    N = 40
-    x = np.linspace(0, 1, N)
-    y = np.random.randn(N)
-    df = pd.DataFrame({'x': x, 'y': y}) # creating a sample dataframe
-
-
-    data = [
-        go.Bar(
-            x=df['x'], # assign x as the dataframe column 'x'
-            y=df['y']
-        )
-    ]
-
-    graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
-
-    return graphJSON
+routes = Blueprint('routes', __name__, template_folder='./view', static_folder='./view')
 
 @app.route('/')
 def index():
-    bar = create_plot()
-    return render_template('index.html', plot=bar)
+    return render_template('index.html')
 
 @app.route('/config', methods=['POST', 'GET'])
 def configHandler():
@@ -62,11 +21,11 @@ def configHandler():
             camera.setConfigDefault(config["default"])
             return jsonify(config["default"])
         elif jsonData["browserEvent"] == "loaded":
-            # camera.gen_frames()
             result = camera.getConfig()
+            # camera.setConfig(result)
+            # jsonTemp = config
+            # jsonTemp["event"] = "loaded"
             return jsonify(result)
-        # elif jsonData["browserEvent"] == "close":
-            
         else :
             print(jsonData)
             camera.cap.set(cv2.CAP_PROP_EXPOSURE, jsonData['exposure'])
@@ -103,20 +62,12 @@ def saveHandler():
 
 @app.route('/requests', methods=['POST', 'GET'])
 def recvHandler():
-    global rawImage, diffImage
     result = {}
     jsonData = request.get_json()
     if request.method == 'POST':
         jsonData = request.get_json()
         print(jsonData)
-
-        if  jsonData["browserEvent"] == "loaded":
-            camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
-            camera.imgAndBinTreshold =  config['imgAndBinTreshold']
-            camera.medianBlur = config['medianBlur']
-            print("loaded")
-
-        elif jsonData["browserEvent"] == "changeFeed":
+        if jsonData["browserEvent"] == "changeFeed":
             camera.feedStatus = jsonData["feedStatus"]
             print("change feed")
 
@@ -141,12 +92,12 @@ def recvHandler():
             result['message'] = "success"
 
         elif jsonData["browserEvent"] == "closed":
-            # camera.camRelease()
+            camOpen = False
             print("closed")
 
         elif jsonData["browserEvent"] == "feedStatus": 
-            subtract_background_feed = jsonData["feed"]
-            # subtract_background_feed = jsonData["feedStatus"]["subtractBackground"]
+            # subtract_background_feed = jsonData["feed"]
+            subtract_background_feed = jsonData["feedStatus"]["subtractBackground"]
 
     elif request.method == 'GET':
         return render_template('index.html')
@@ -155,16 +106,8 @@ def recvHandler():
 
 @app.route('/video_feed')
 def video_feed():
-    # return Response(camera.thread_raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    return Response(camera.gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(camera.gen_frames("process"), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# @app.route('/config_feed')
-# def config_feed():
-#     # return Response(camera.thread_process_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
-#     return Response(camera.gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-if __name__ == '__main__':
-    app.run(debug=True)
-
-camera.cap.release()
-print("process destroyed")
+@app.route('/config_feed')
+def config_feed():
+    return Response(camera.gen_frames("config"), mimetype='multipart/x-mixed-replace; boundary=frame')

@@ -59,37 +59,37 @@
     } 
 
     exposureText.oninput = function() {
-        jsonData.exposure = exposureText.value;
+        jsonData.exposure = parseInt(exposureText.value);
         exposure.value  = exposureText.value;
         postjsonServ("/config", jsonData);
     } 
     
     brightnessText.oninput = function() {
-        jsonData.brightness = brightnessText.value;
+        jsonData.brightness = parseInt(brightnessText.value);
         brightness.value  = brightnessText.value;
         postjsonServ("/config", jsonData);
     } 
     
     contrastText.oninput = function() {
-        jsonData.contrast = contrastText.value;
+        jsonData.contrast = parseInt(contrastText.value);
         contrast.value  = contrastText.value;
         postjsonServ("/config", jsonData);
     } 
     
     hueText.oninput = function() {
-        jsonData.hue = hueText.value;
+        jsonData.hue = parseInt(hueText.value);
         hue.value  = hueText.value;
         postjsonServ("/config", jsonData);
     } 
     
     saturationText.oninput = function() {
-        jsonData.saturation = saturationText.value;
+        jsonData.saturation = parseInt(saturationText.value);
         saturation.value  = saturationText.value;
         postjsonServ("/config", jsonData);
     } 
 
     sharpnessText.oninput = function() {
-        jsonData.sharpness = sharpnessText.value;
+        jsonData.sharpness = parseInt(sharpnessText.value);
         sharpness.value  = sharpnessText.value;
         postjsonServ("/config", jsonData);
     }
@@ -121,6 +121,7 @@
     }
 
     function setAllParams(jsonVal){
+        console.log(jsonVal);
         exposure.value = jsonVal.exposure
         brightness.value = jsonVal.brightness;
         contrast.value = jsonVal.constrastVal;
@@ -151,6 +152,8 @@
     
     window.addEventListener('beforeunload', function (e) {
         jsonData.browserEvent = "closed";
+        postjsonServ("/config", jsonData);
+        jsonData.browserEvent = "normal";
         // postjsonServ("/config", jsonData);
         // e.preventDefault();
         // e.returnValue = '';
