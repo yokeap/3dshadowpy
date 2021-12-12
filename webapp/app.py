@@ -19,6 +19,9 @@ with open('./config.json', 'r') as f:
     config = json.load(f)
 
 camera = camgrab.camgrab(config)
+camera.threadGenFrames.do_run = False
+if camera.threadGenFrames.is_alive():
+    camera.threadGenFrames.stop()
 # time.sleep(5)
 # camera.gen_frames()
 
@@ -110,6 +113,48 @@ def recvHandler():
         jsonData = request.get_json()
         print(jsonData)
 
+        # match jsonData['browserEvent']:
+            
+        #     case 'loaded':
+        #         camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
+        #         camera.imgAndBinTreshold =  config['imgAndBinTreshold']
+        #         camera.medianBlur = config['medianBlur']
+        #         print("loaded")
+
+        #     case 'changeFeed':
+        #         camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
+        #         camera.imgAndBinTreshold =  config['imgAndBinTreshold']
+        #         camera.medianBlur = config['medianBlur']
+        #         print("loaded")
+
+        #     case 'changeProcessVal':
+        #         camera.feedStatus = jsonData["feedStatus"]
+        #         camera.imgDiffBinTreshold = jsonData['imgDiffBinTreshold']
+        #         camera.imgAndBinTreshold = jsonData['imgAndBinTreshold']
+        #         camera.medianBlur = jsonData['medianBlur']
+        #         print("change process value")
+
+        #     case 'capture':
+        #         # camera.shotSetting()
+        #         camera.captureAll()
+        #         result['message'] = "success"
+        #         return jsonify(result['message'])
+
+        #     case 'params':
+        #         jsonData = request.get_json()
+        #         # write it back to the file
+        #         with open('./config.json', 'w') as f:
+        #             json.dump(merge(config, jsonData), f)
+        #         result['message'] = "success"
+
+        #     case 'closed':
+        #         # camera.camRelease()
+        #         print("closed")
+
+        #     case 'feedStatus':
+        #         subtract_background_feed = jsonData["feed"]
+        #         # subtract_background_feed = jsonData["feedStatus"]["subtractBackground"]
+
         if  jsonData["browserEvent"] == "loaded":
             camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
             camera.imgAndBinTreshold =  config['imgAndBinTreshold']
@@ -156,7 +201,13 @@ def recvHandler():
 @app.route('/video_feed')
 def video_feed():
     # return Response(camera.thread_raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    return Response(camera.gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if not camera.threadGenFrames.is_alive():
+        camera.threadGenFrames.start()
+    return Response(camera.raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/subtract_background')
+def subtract_background():
+    return Response(camera.subtract_background_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # @app.route('/config_feed')
 # def config_feed():
