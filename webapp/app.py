@@ -25,30 +25,30 @@ if camera.threadGenFrames.is_alive():
 # time.sleep(5)
 # camera.gen_frames()
 
-def create_plot():
+# def create_plot():
 
 
-    N = 40
-    x = np.linspace(0, 1, N)
-    y = np.random.randn(N)
-    df = pd.DataFrame({'x': x, 'y': y}) # creating a sample dataframe
+#     N = 40
+#     x = np.linspace(0, 1, N)
+#     y = np.random.randn(N)
+#     df = pd.DataFrame({'x': x, 'y': y}) # creating a sample dataframe
 
 
-    data = [
-        go.Bar(
-            x=df['x'], # assign x as the dataframe column 'x'
-            y=df['y']
-        )
-    ]
+#     data = [
+#         go.Bar(
+#             x=df['x'], # assign x as the dataframe column 'x'
+#             y=df['y']
+#         )
+#     ]
 
-    graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
+#     graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
 
-    return graphJSON
+#     return graphJSON
 
 @app.route('/')
 def index():
-    bar = create_plot()
-    return render_template('index.html', plot=bar)
+    # bar = create_plot()
+    return render_template('index.html')
 
 @app.route('/config', methods=['POST', 'GET'])
 def configHandler():

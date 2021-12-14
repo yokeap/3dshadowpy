@@ -127,6 +127,8 @@ function saveParams(){
     jsonData.browserEvent = "normal";
 }
 
+
+
 document.addEventListener('DOMContentLoaded', (event) => {
     subTreshValText.value = subTreshVal.value;
     objShadowTreshValText.value = objShadowTreshVal.value;
