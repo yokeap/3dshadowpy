@@ -40,7 +40,7 @@ def objShadow(imgSample, imgOpening):
         # cv2.drawContours(imgFill, [contour], 0, (255, 255, 255), -1)
         (x, y, w, h) = cv2.boundingRect(contour)
         # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        boudingRect.append([x, y, w, h])
+        boudingRect.append([x - 5, y - 5, w + 5, h + 5])
 
     # height, width, channel = imgSample.shape
     imgMaskRGB = np.zeros_like(imgSample)

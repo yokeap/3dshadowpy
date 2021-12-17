@@ -45,6 +45,8 @@ var jsonData = {
 //     objShadowTreshVal.value = objShadowTreshValText.value;
 // }
 
+
+
 var ranges = document.querySelectorAll('input[type=range]');
 ranges.forEach(
     range => range.addEventListener('input', () => {

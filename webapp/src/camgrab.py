@@ -41,7 +41,7 @@ class camgrab:
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = 240
         self.imgAndBinTreshold = 50
-        self.medianBlur = 9
+        self.medianBlur = 12
 
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
@@ -52,8 +52,12 @@ class camgrab:
 
         self.queueRawFeed = queue.Queue()
         self.queueSubBackgroundFeed = queue.Queue()
-        
-        self.threadGenFrames = Thread(target=self.gen_frames, args=(self.queueRawFeed, self.queueSubBackgroundFeed), daemon=True)
+        self.queueImgAndFeed = queue.Queue()
+        self.queueMorphFeed = queue.Queue()
+        self.mainFeed = queue.Queue()
+
+        self.threadGenFrames = Thread(target=self.gen_frames, args=(
+            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, self.queueMorphFeed, self.mainFeed), daemon=True)
         # self.threadRawFeed = Thread(target=self.thread_raw_feed)
 
     def setConfigDefault(self, config):
@@ -151,18 +155,37 @@ class camgrab:
     #         else:
     #             pass
 
-    def gen_frames(self, queueRawFeed, queueSubBackground):
+    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed):
         while True:
             if self.cap != 0:
                 success, frame = self.cap.read()
                 self.success = success
                 if success:
                     # print("Fire")
+                    self.success = False
                     queueRawFeed.put(frame)
                     diffImage = cv2.cvtColor(
                         frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
+                    ret, imgDiffBin = cv2.threshold(
+                        diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
                     queueSubBackground.put(diffImage)
-                    self.success = False
+                    imgAnd = cv2.bitwise_and(
+                        imgDiffBin, diffImage)
+                    ret, imgBin = cv2.threshold(
+                        imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
+                    queueImgAndFeed.put(imgBin)
+                    imgOpening = cv2.morphologyEx(
+                        imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+                    imgOpening = cv2.medianBlur(
+                        imgOpening, self.medianBlur)
+                    queueMorphFeed.put(imgOpening)
+                    imgSegmentBin, posCrop = segmentation.objShadow(
+                        frame, imgOpening)
+                    for crop in posCrop:
+                        print(crop)
+                        cv2.rectangle(frame, (crop[0], crop[1]),
+                                        (crop[0] + crop[2], crop[1] + crop[3]), (0, 0, 255), 3)
+                    
                 else:
                     pass
             else:
@@ -182,6 +205,26 @@ class camgrab:
         while True:
             # self.threadGenFrames.join()
             frame = self.queueSubBackgroundFeed.get()
+            # self.diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    def imgAnd_feed(self):
+        # self.threadGenFrames.start()
+        while True:
+            # self.threadGenFrames.join()
+            frame = self.queueImgAndFeed.get()
+            # self.diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    def morph_feed(self):
+        # self.threadGenFrames.start()
+        while True:
+            # self.threadGenFrames.join()
+            frame = self.queueMorphFeed.get()
             # self.diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
             ret, buffer = cv2.imencode('.jpg', frame)
             yield (b'--frame\r\n'

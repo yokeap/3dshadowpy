@@ -16,7 +16,7 @@ hist_h = cv2.calcHist([h],[0],None,[360],[0,360])
 hist_s = cv2.calcHist([s],[0],None,[256],[0,256])
 hist_v = cv2.calcHist([v],[0],None,[256],[0,256])
 
-print([s])
+print(hist_h[1])
 
 # plt.plot(hist_h, color='r', label="h")
 plt.plot(hist_s, color='g', label="s")

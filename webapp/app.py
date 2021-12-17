@@ -209,6 +209,14 @@ def video_feed():
 def subtract_background():
     return Response(camera.subtract_background_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/imgand')
+def imgand():
+    return Response(camera.imgAnd_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/imgmorph')
+def imgmorph():
+    return Response(camera.morph_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 # @app.route('/config_feed')
 # def config_feed():
 #     # return Response(camera.thread_process_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')

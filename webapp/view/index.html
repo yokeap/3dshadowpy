@@ -41,9 +41,8 @@
 </header>
 
 <body>
-    <div class="container-fluid" style="max-height: 1030px;">
 
-        <div class="row container-fluid" style="max-height: 90%;">
+        <div class="container-fluid">
             <!-- <div class="col-8">
                 <img src="./view/static/img/mock.jpg" alt="test" style="width: 1024px; height: 768px;">
                 <img src="./view/static/img/mock.jpg" alt="test" style="max-width: 100%;">
@@ -53,11 +52,31 @@
                 <input type="range" class="form-range" min="0" max="255" id="slider1">
             </div> -->
 
-            <div class="d-flex flex-row" style="height: 768px; width: 100%; ">
-                <div class="d-flex flex-row" style="width: 70%;">
-                    <!-- <img id="img-stream" src="{{ url_for('video_feed') }}" alt="test" style="max-width: 100%;">
-                    <img id="img-subtractBg" src="{{ url_for('subtract_background') }}" alt="test" style="max-width: 100%;"> -->
-                    <img id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="max-width: 100%;">
+            <div class="d-flex flex-row" style="max-height: 100%; max-width: 100%; ">
+                <!-- <div class="d-flex flex-row" style="width: 70%;">
+                    <img id="img-stream" src="{{ url_for('video_feed') }}" alt="test" style="max-width: 100%;">
+                    <img id="img-subtractBg" src="{{ url_for('subtract_background') }}" alt="test" style="max-width: 100%;">
+                </div> -->
+
+                <div class="container" style="max-width: 55%;">
+                    <div class="row" >
+                        <div class="col-4 d-flex flex-column">
+                            <img class="py-2" id="img-stream" src="{{ url_for('video_feed') }}" alt="test" style="max-width: 100%; object-fit: contain;">
+                            <img class="py-2" id="img-stream" src="{{ url_for('subtract_background') }}" alt="test" style="max-width: 100%; object-fit: contain;">
+                            <img class="py-2" id="img-stream" src="{{ url_for('imgand') }}" alt="test" style="max-width: 100%; object-fit: contain;">
+                            <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test" style="max-width: 100%; object-fit: contain;">
+                        </div>
+                        <div class="col-8">
+                                <div class="row" style="height: 15%;">
+                                    <div class="d-flex flex-row" style="max-height: 90%;">
+                                        <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="max-height: 100%; object-fit: contain;">
+                                        <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="max-height: 100%; object-fit: contain;">
+                                    </div>
+                                </div>
+                            <img id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="max-width: 100%; object-fit: contain;">
+                        </div>
+                    </div>
+                    
                 </div>
 
                 <div class="d-flex flex-column px-5">
@@ -71,51 +90,31 @@
                     <div class="d-flex flex-column px-5" style="width: 350px">
 
                         <!-- Subtract Bitwise Threshold -->
-                        <div class="row border-bottom pt-4">
-                            <span class="text-white">View Setting (Top down process)</span>
+                        <div class="row border-bottom pt-1">
+                            <span class="text-white">View Setting </span>
                         </div>
 
                         <div class="d-flex flex-column pt-3">
                             <div class="btn-group-vertical" role="group" name="radioGroup"
                                 aria-label="Basic radio toggle button group">
 
-                                <input class="btn-check" type="radio" name="btnradio" value="rawImage" id="swtRawImage"
+                                <input class="btn-check" type="radio" name="btnradio" value="2dImage" id="swt2dImage"
                                     autocomplete="off" checked>
-                                <label class="btn btn-outline-primary text-white" for="swtRawImage">RawImage</label>
+                                <label class="btn btn-outline-primary text-white" for="swt2dImage">2D Image</label>
 
-                                <input class="btn-check" type="radio" name="btnradio" value="subtractBackground"
-                                    id="swtSubtractBackground" autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtSubtractBackground">Subtract
-                                    Background Image</label>
+                                <input class="btn-check" type="radio" name="btnradio" value="3dReconstuction"
+                                    id="swt3dReconstruction" autocomplete="off">
+                                <label class="btn btn-outline-primary text-white" for="swt3dReconstruction">3D Reconstruction</label>
 
-                                <input class="btn-check" type="radio" name="btnradio" value="binaryImage"
-                                    id="swtBinaryImage" autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtBinaryImage">Binary
-                                    Image</label>
+                                <input class="btn-check" type="radio" name="btnradio" value="sliceImage"
+                                    id="swtSliceImage" autocomplete="off">
+                                <label class="btn btn-outline-primary text-white" for="swtSliceImage">Slice Image</label>
 
-                                <input class="btn-check" type="radio" name="btnradio" value="andImage" id="swtAndImage"
+                                <input class="btn-check" type="radio" name="btnradio" value="rayTracing" id="swtRayTracing"
                                     autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtAndImage">And Operator</label>
+                                <label class="btn btn-outline-primary text-white" for="swtRayTracing">Ray Tracing</label>
 
-                                <input class="btn-check" type="radio" name="btnradio" value="morphologyImage"
-                                    id="swtMorphology" autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtMorphology">Morphology
-                                    Result</label>
-
-                                <input class="btn-check" type="radio" name="btnradio" value="segmentImage"
-                                    id="swtObjResultSegment" autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtObjResultSegment">Segmentation
-                                    Result</label>
-
-                                <input class="btn-check" type="radio" name="btnradio" value="objImage" id="swtObjImage"
-                                    autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtObjImage">Object
-                                    Extraction</label>
-
-                                <input class="btn-check" type="radio" name="btnradio" value="shadowImage"
-                                    id="swtShadowImage" autocomplete="off">
-                                <label class="btn btn-outline-primary text-white" for="swtShadowImage">Shadow
-                                    Extraction</label>
+                                
                             </div>
                         </div>
 
@@ -155,7 +154,7 @@
 
                         <div class="row pt-2 ">
                             <div class="col-8">
-                                <input type="range" class="form-range align-middle" min="0" max="15" value="9"
+                                <input type="range" class="form-range align-middle" min="0" max="15" step="3" value="9"
                                     id="medBlurVal">
                             </div>
                             <div class="col-4">
@@ -195,16 +194,14 @@
                 </div>
             </div>
 
-            <div class="row">
+            <!-- <div class="row">
                 <div class="d-flex justify-content-around">
                     <img id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="width: 20%;">
                     <img id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="width: 20%;">
                     <img id="img-stream" src="./view/static/img/mock.jpg" alt="test" style="width: 20%;">
                 </div>
-
-            </div>
+            </div> -->
         </div>
-    </div>
     <script>
         function postjsonServ(value) {
             var req = new XMLHttpRequest();

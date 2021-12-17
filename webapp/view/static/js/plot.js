@@ -1,104 +1,177 @@
 const chart_histH = new Chart(document.getElementById('histH'), {
-    type: 'bar',
+    type: "line",
     data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        labels: _360num(),
         datasets: [{
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
             backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
                 'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
             ],
             borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
                 'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
             ],
-            borderWidth: 1
+            data: [],
+            fill: 'origin'
         }]
     },
     options: {
+        plugins: {
+            filler: {
+                propagate: false,
+            },
+            title: {
+                display: true,
+                text: "Hue",
+                color: 'white'
+            },
+            legend: {
+                display: false,
+            }
+        },
         scales: {
             y: {
+                ticks: {
+                    color: 'rgba(255, 159, 64, 0.4)',
+                },
+                beginAtZero: true
+            },
+            x: {
+                type: 'linear',
+                min: 0,
+                max: 255,
+                ticks: {
+                    color: 'rgba(255, 159, 64, 0.4)',
+                    stepSize: 50,
+                },
                 beginAtZero: true
             }
         }
+
     }
 });
 
 const chart_histS = new Chart(document.getElementById('histS'), {
-    type: 'bar',
+    type: "line",
     data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        labels: _256num(),
         datasets: [{
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
             backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
                 'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
             ],
             borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
                 'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
             ],
-            borderWidth: 1
+            data: [],
+            fill: 'origin'
         }]
     },
     options: {
+        plugins: {
+            filler: {
+                propagate: false,
+            },
+            title: {
+                display: true,
+                text: "Saturation",
+                color: 'white'
+            },
+            legend: {
+                display: false,
+            }
+        },
         scales: {
             y: {
+                ticks: {
+                    color: 'rgba(255, 159, 64, 0.4)',
+                },
+                beginAtZero: true
+            },
+            x: {
+                type: 'linear',
+                min: 0,
+                max: 255,
+                ticks: {
+                    color: 'rgba(255, 159, 64, 0.4)',
+                    stepSize: 50,
+                },
                 beginAtZero: true
             }
         }
+
     }
 });
 
 const chart_histV = new Chart(document.getElementById('histV'), {
-    type: 'bar',
+    type: "line",
     data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
+        labels: _256num(),
         datasets: [{
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
             backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
                 'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
             ],
             borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
                 'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
             ],
-            borderWidth: 1
+            data: [],
+            fill: 'origin'
         }]
     },
     options: {
+        plugins: {
+            filler: {
+                propagate: false,
+            },
+            title: {
+                display: true,
+                text: "Value",
+                color: 'white'
+            },
+            legend: {
+                display: false,
+            }
+        },
         scales: {
             y: {
+                ticks: {
+                    color: 'rgba(255, 159, 64, 0.4)',
+                },
+                beginAtZero: true
+            },
+            x: {
+                type: 'linear',
+                min: 0,
+                max: 255,
+                ticks: {
+                    color: 'rgba(255, 159, 64, 0.4)',
+                    stepSize: 50,
+                },
                 beginAtZero: true
             }
         }
+
     }
 });
+
+function generateData(hist) {
+    var xValues = [];
+    var yValues = [];
+    for (let i = 0; i < hist.shape[0]; i++) {
+        xValues.push(i);
+        yValues.push(hist[0])
+    }
+}
+
+function _256num() {
+    var xValues = [];
+    for (let i = 0; i < 256; i++) {
+        xValues.push(i);
+    }
+    return xValues;
+}
+
+function _360num() {
+    var xValues = [];
+    for (let i = 0; i < 360; i++) {
+        xValues.push(i);
+    }
+    return xValues;
+}

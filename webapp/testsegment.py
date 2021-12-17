@@ -45,9 +45,11 @@ for crop in posCrop:
     print(crop)  
     imgROI.append(imgSegment[crop[1]:crop[1] + crop[3], crop[0]:crop[0] + crop[2]])  
     # imgROI = [imgSegment[crop[1]:crop[1] + crop[3], crop[0]:crop[0] + crop[2]]]
+    cv2.rectangle(imgSample, (crop[0], crop[1]), (crop[0] + crop[2], crop[1] + crop[3]), (0, 0, 255), 3)
 
-cv2.imshow("Image crop1", imgROI[0])
-cv2.imshow("Image crop2", imgROI[1])
+cv2.imshow("Image Draw Segment", imgSample)
+# cv2.imshow("Image crop1", imgROI[0])
+# cv2.imshow("Image crop2", imgROI[1])
 
 cv2.imwrite(os.path.join("./test" , 'test.jpg'), imgROI[0])
 
