@@ -54,10 +54,10 @@ class camgrab:
         self.queueSubBackgroundFeed = queue.Queue()
         self.queueImgAndFeed = queue.Queue()
         self.queueMorphFeed = queue.Queue()
-        self.mainFeed = queue.Queue()
+        self.segmentSourceFeed = queue.Queue()
 
         self.threadGenFrames = Thread(target=self.gen_frames, args=(
-            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, self.queueMorphFeed, self.mainFeed), daemon=True)
+            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, self.queueMorphFeed, self.segmentSourceFeed), daemon=True)
         # self.threadRawFeed = Thread(target=self.thread_raw_feed)
 
     def setConfigDefault(self, config):
@@ -155,7 +155,7 @@ class camgrab:
     #         else:
     #             pass
 
-    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed):
+    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed):
         while True:
             if self.cap != 0:
                 success, frame = self.cap.read()
@@ -179,13 +179,9 @@ class camgrab:
                     imgOpening = cv2.medianBlur(
                         imgOpening, self.medianBlur)
                     queueMorphFeed.put(imgOpening)
-                    imgSegmentBin, posCrop = segmentation.objShadow(
+                    imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(
                         frame, imgOpening)
-                    for crop in posCrop:
-                        print(crop)
-                        cv2.rectangle(frame, (crop[0], crop[1]),
-                                        (crop[0] + crop[2], crop[1] + crop[3]), (0, 0, 255), 3)
-                    
+                    segmentSourceFeed.put(imgSegmentSource)
                 else:
                     pass
             else:
@@ -225,6 +221,16 @@ class camgrab:
         while True:
             # self.threadGenFrames.join()
             frame = self.queueMorphFeed.get()
+            # self.diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    def segmented_feed(self):
+        # self.threadGenFrames.start()
+        while True:
+            # self.threadGenFrames.join()
+            frame = self.segmentSourceFeed.get()
             # self.diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
             ret, buffer = cv2.imencode('.jpg', frame)
             yield (b'--frame\r\n'

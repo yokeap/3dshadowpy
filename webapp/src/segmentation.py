@@ -24,39 +24,55 @@ def draw_angled_rec(x0, y0, width, height, angle, img):
     cv2.line(img, pt3, posOrigin, (0, 0, 255), 1)
     return img
 
-def objShadow(imgSample, imgOpening):
+def objShadow(imgSource, imgOpening):
     x = 0
     y = 0
     w = 0
     h = 0
+    margin = 5
     boudingRect = []
+    imgArrayROI = []
+
+    imgMaskRGB = np.zeros_like(imgSource)
+    imgMaskRGB[:, :, 0] = imgOpening
+    imgMaskRGB[:, :, 1] = imgOpening
+    imgMaskRGB[:, :, 2] = imgOpening
+
+    imgSegmentBlackColor = cv2.bitwise_and(imgSource, imgMaskRGB)
+
     contours, hierarchy = cv2.findContours(
         imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     for contour in contours:
         # find the biggest area of the contour
         # big_contour = max(contours, key=cv2.contourArea)
         # draw filled contour on black background
-        # imgFill = np.zeros_like(imgSample)
+        # imgFill = np.zeros_like(imgSource)
         # cv2.drawContours(imgFill, [contour], 0, (255, 255, 255), -1)
         (x, y, w, h) = cv2.boundingRect(contour)
+        OriginX = x - margin
+        OriginY = y - margin
+        Width = w + margin
+        Height = h + margin
         # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        boudingRect.append([x - 5, y - 5, w + 5, h + 5])
+        boudingRect.append([OriginX, OriginY, Width, Height])
+        cv2.rectangle(imgSource, (OriginX, OriginY), (x + Width, y + Height), (255, 255, 255), 2)
+        imgArrayROI.append(imgSegmentBlackColor[OriginY:OriginY + Height, OriginX:OriginX + Width])  
 
-    # height, width, channel = imgSample.shape
-    imgMaskRGB = np.zeros_like(imgSample)
-    imgMaskRGB[:, :, 0] = imgOpening
-    imgMaskRGB[:, :, 1] = imgOpening
-    imgMaskRGB[:, :, 2] = imgOpening
-    # apply Opening to input image
-    # Create a green screen image (background color is used to seperated the object).
-    # ie. apple used green screen, mango used red screen.
-    imgAnd = cv2.bitwise_and(imgSample, imgMaskRGB)
+    # height, width, channel = imgSource.shape
+    # imgMaskRGB = np.zeros_like(imgSource)
+    # imgMaskRGB[:, :, 0] = imgOpening
+    # imgMaskRGB[:, :, 1] = imgOpening
+    # imgMaskRGB[:, :, 2] = imgOpening
+    # # apply Opening to input image
+    # # Create a green screen image (background color is used to seperated the object).
+    # # ie. apple used green screen, mango used red screen.
+    # imgSegmentBlackColor = cv2.bitwise_and(imgSource, imgMaskRGB)
     # for crop in posCrop:
     #     if not crop[0] or crop[1]:
     #         imgMaskout.append(imgAnd[y:y+h, x:x+w])
     #         cv2.rectangle(imgAnd, (crop[0], crop[1]), (crop[0]+crop[2], crop[1]+crop[3]), (0, 0, 255), 2)
     
-    return imgAnd, boudingRect
+    return imgSource, imgSegmentBlackColor, imgArrayROI, boudingRect
 
 def obj(imgMaskOut):
     x = 0

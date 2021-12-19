@@ -35,19 +35,21 @@ imgMask = cv2.cvtColor(imgMask, cv2.COLOR_BGR2GRAY)
 #     # print(x , ',' , y , ',' , w , ',' , h)
 #     # cv2.rectangle(imgContour, (x, y), (x + w, y + h), (255, 255, 255), 2)
 
-imgSegment, posCrop = segmentation.objShadow(
+imgSegmentSource, imgSegmentBlack, imgROI, posCrop  = segmentation.objShadow(
                         imgSample, imgMask)
 
-cv2.imshow("Image Segment", imgSegment)
+cv2.imshow("Image Segment", imgSegmentSource)
+cv2.imshow("Image ROI", imgROI[0])
 
-imgROI = []
-for crop in posCrop:
-    print(crop)  
-    imgROI.append(imgSegment[crop[1]:crop[1] + crop[3], crop[0]:crop[0] + crop[2]])  
-    # imgROI = [imgSegment[crop[1]:crop[1] + crop[3], crop[0]:crop[0] + crop[2]]]
-    cv2.rectangle(imgSample, (crop[0], crop[1]), (crop[0] + crop[2], crop[1] + crop[3]), (0, 0, 255), 3)
+# margin = 5
+# imgROI = []
+# for crop in posCrop:
+#     print(crop)  
+#     imgROI.append(imgSegment[crop[1]:crop[1] + crop[3], crop[0]:crop[0] + crop[2]])  
+#     # imgROI = [imgSegment[crop[1]:crop[1] + crop[3], crop[0]:crop[0] + crop[2]]]
+#     cv2.rectangle(imgSource, (OriginX, OriginY), (x + Width, y + Height, (0, 0, 255), 2))
 
-cv2.imshow("Image Draw Segment", imgSample)
+# cv2.imshow("Image Draw Segment", imgSample)
 # cv2.imshow("Image crop1", imgROI[0])
 # cv2.imshow("Image crop2", imgROI[1])
 

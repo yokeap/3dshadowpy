@@ -217,6 +217,10 @@ def imgand():
 def imgmorph():
     return Response(camera.morph_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/imgsegentedcrop')
+def imgsegentedcrop():
+    return Response(camera.segmented_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 # @app.route('/config_feed')
 # def config_feed():
 #     # return Response(camera.thread_process_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
