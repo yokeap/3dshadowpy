@@ -113,48 +113,6 @@ def recvHandler():
         jsonData = request.get_json()
         print(jsonData)
 
-        # match jsonData['browserEvent']:
-            
-        #     case 'loaded':
-        #         camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
-        #         camera.imgAndBinTreshold =  config['imgAndBinTreshold']
-        #         camera.medianBlur = config['medianBlur']
-        #         print("loaded")
-
-        #     case 'changeFeed':
-        #         camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
-        #         camera.imgAndBinTreshold =  config['imgAndBinTreshold']
-        #         camera.medianBlur = config['medianBlur']
-        #         print("loaded")
-
-        #     case 'changeProcessVal':
-        #         camera.feedStatus = jsonData["feedStatus"]
-        #         camera.imgDiffBinTreshold = jsonData['imgDiffBinTreshold']
-        #         camera.imgAndBinTreshold = jsonData['imgAndBinTreshold']
-        #         camera.medianBlur = jsonData['medianBlur']
-        #         print("change process value")
-
-        #     case 'capture':
-        #         # camera.shotSetting()
-        #         camera.captureAll()
-        #         result['message'] = "success"
-        #         return jsonify(result['message'])
-
-        #     case 'params':
-        #         jsonData = request.get_json()
-        #         # write it back to the file
-        #         with open('./config.json', 'w') as f:
-        #             json.dump(merge(config, jsonData), f)
-        #         result['message'] = "success"
-
-        #     case 'closed':
-        #         # camera.camRelease()
-        #         print("closed")
-
-        #     case 'feedStatus':
-        #         subtract_background_feed = jsonData["feed"]
-        #         # subtract_background_feed = jsonData["feedStatus"]["subtractBackground"]
-
         if  jsonData["browserEvent"] == "loaded":
             camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
             camera.imgAndBinTreshold =  config['imgAndBinTreshold']
@@ -198,8 +156,8 @@ def recvHandler():
     return render_template('index.html')
 
 
-@app.route('/video_feed')
-def video_feed():
+@app.route('/raw_feed')
+def raw_feed():
     # return Response(camera.thread_raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
     if not camera.threadGenFrames.is_alive():
         camera.threadGenFrames.start()

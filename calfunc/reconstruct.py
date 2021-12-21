@@ -21,11 +21,13 @@ debug = True
 
 
 class ObjReconstruction:
-    def __init__(self, imgSource, homographyMatrix, posVirlightIMG, posVirlightWorld, scale):
+    def __init__(self, imgSample, imgOpening, homographyMatrix, posVirlightIMG, posVirlightWorld, scale):
+        self.imgSample = imgSample
+        self.imgOpening = imgOpening
         self.homographyMatrix = homographyMatrix
         self.posVirlightIMG = posVirlightIMG
         self.posVirlightWorld = posVirlightWorld
-        height, width, channel = imgSource.shape
+        height, width, channel = imgSample.shape
         self.ptCloudSectionLeft = np.empty((height, 3))
         self.ptCloudSectionRight = np.empty((height, 3))
         self.ptCloudObjHeightUpper = np.empty((height, 3))
@@ -62,10 +64,23 @@ class ObjReconstruction:
             if cv2.countNonZero(imgOriginal) == 0:
                 return skel
 
-    def reconstruct(self, imgSource, imgObj, imgShadow, posCrop):
+    def reconstruct(self):
         self.loop = 0
-        imgSkeleton = skeletonize(imgObj, method='lee')
-        imgHeight, imgWidth, = imgObj.shape
+        # median filter was used to expand and fill some hole
+        # imgBin = cv2.blur(imgBin, (3, 3))
+        imgObjBin, posCrop = segmentation.obj(
+            self.imgSample, self.imgOpening)
+        cv2.imshow("Object Image", imgObjBin)
+
+        imgShadowBin = segmentation.shadow(self.imgOpening, imgObjBin)
+        cv2.imshow("Shadow Image", imgShadowBin)
+        imgSkeleton = skeletonize(imgObjBin, method='lee')
+        # imgSkeleton = cv2.dilate(imgSkeleton, np.ones(
+        #     (3, 3), np.uint8), iterations=3)
+        # imgSkeleton = skeleton(imgObjBin)
+        # posImgSkeletonOrigin, posImgSkeletonDestination, imgSkeleton = segmentation.pseudoSkeleton(
+        #     imgObjBin)
+        imgHeight, imgWidth = imgObjBin.shape
         if debug == True:
             cv2.imshow("Skeleton image", imgSkeleton)
         # scaning input binary image to detect the object edge
@@ -83,22 +98,19 @@ class ObjReconstruction:
         # self.ptCloudObjHeightUpper=[]
         self.heightShadow = np.empty(imgHeight)
         # scan for all (object: upper, middle and lower edge; shadow lower edge)
-
-        for x in range(posCrop[0][0], posCrop[0][0] + posCrop[0][2]):
+        for x in range(posCrop[0], posCrop[0] + posCrop[2]):
             flagObjUpperEdge = False
             flagObjMiddleEdge = False
             flagObjLowerEdge = False
             flagShadowLowerEdge = False
             flagShadowUpperEdge = False
             # for uppper edges
-            for y in range(posCrop[0][1], posCrop[0][1] + posCrop[0][3]):
-                pixObjVal = imgObj.item(y - posCrop[0][1], x - posCrop[0][0])
-                pixSkeletonVal = imgSkeleton.item(y - posCrop[0][1], x - posCrop[0][0])
-                # pixShadowVal = imgShadow.item(y, x)
+            for y in range(posCrop[1], posCrop[1] + posCrop[3]):
+                pixObjVal = imgObjBin.item(y, x)
+                pixSkeletonVal = imgSkeleton.item(y, x)
+                pixShadowVal = imgShadowBin.item(y, x)
                 # xx, yy is origianl position before cropped
                 # upper edges detection
-                # xx = x + posCrop[0][0]
-                # yy = y + posCrop[0][1] 
                 if flagObjUpperEdge == False and pixObjVal > 0:
                     flagObjUpperEdge = True
                     # save x y coordinate with homogeneous coordiate
@@ -136,7 +148,7 @@ class ObjReconstruction:
                             posSampling[0] = imgWidth - 1
                         if(posSampling[1] > imgHeight):
                             break
-                        if flagShadowLowerEdge == False and imgShadow.item(int(posSampling[1]), int(posSampling[0])) > 0:
+                        if flagShadowLowerEdge == False and imgShadowBin.item(int(posSampling[1]), int(posSampling[0])) > 0:
                             flagShadowLowerEdge = True
                             # add 1.0 as homogeneous coordinate
                             posShadowLower = [
@@ -149,7 +161,7 @@ class ObjReconstruction:
                                 posShadowLowerWorld)
                             # self.ptCloudSectionRight[loop,
                             #                          :] = posShadowLowerWorld
-                        if flagShadowLowerEdge == True and flagShadowUpperEdge == False and imgShadow.item(int(posSampling[1]), int(posSampling[0])) < 1:
+                        if flagShadowLowerEdge == True and flagShadowUpperEdge == False and imgShadowBin.item(int(posSampling[1]), int(posSampling[0])) < 1:
                             flagShadowUpperEdge = True
                             posShadowUpper = [
                                 posSampling[0], posSampling[1], 1.0]

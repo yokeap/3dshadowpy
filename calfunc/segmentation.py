@@ -24,106 +24,91 @@ def draw_angled_rec(x0, y0, width, height, angle, img):
     cv2.line(img, pt3, posOrigin, (0, 0, 255), 1)
     return img
 
-def objShadow(imgSource, imgOpening):
-    x = 0
-    y = 0
-    w = 0
-    h = 0
-    margin = 5
-    boudingRect = []
-    imgArrayROI = []
+def obj(imgSample, imgOpening):
+    contours, hierarchy = cv2.findContours(
+        imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if len(contours) != 0:
+        # find the biggest area of the contour
+        big_contour = max(contours, key=cv2.contourArea)
+        # draw filled contour on black background
+        # imgMask = np.zeros_like(imgSample)
+        # cv2.drawContours(imgMask, [big_contour], 0, (255, 255, 255), -1)
+        x, y, w, h = cv2.boundingRect(big_contour)
 
-    imgMaskRGB = np.zeros_like(imgSource)
+    # height, width, channel = imgSample.shape
+    imgMaskRGB = np.zeros_like(imgSample)
     imgMaskRGB[:, :, 0] = imgOpening
     imgMaskRGB[:, :, 1] = imgOpening
     imgMaskRGB[:, :, 2] = imgOpening
+    # apply Opening to input image
+    # Create a green screen image (background color is used to seperated the object).
+    # ie. apple used green screen, mango used red screen.
+    imgMaskOut = cv2.bitwise_and(imgSample, imgMaskRGB)
+    if debug == True:
+        cv2.imshow("Green Screen Openinging Result", imgMaskOut)
 
-    imgSegmentBlackColor = cv2.bitwise_and(imgSource, imgMaskRGB)
-
-    contours, hierarchy = cv2.findContours(
-        imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    for contour in contours:
-        (x, y, w, h) = cv2.boundingRect(contour)
-        OriginX = x - margin
-        OriginY = y - margin
-        Width = w + margin
-        Height = h + margin
-        # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
-        boudingRect.append([OriginX, OriginY, Width, Height])
-        cv2.rectangle(imgSource, (OriginX, OriginY), (x + Width, y + Height), (255, 255, 255), 2)
-        imgArrayROI.append(imgSegmentBlackColor[OriginY:OriginY + Height, OriginX:OriginX + Width])  
-    
-    return imgSource, imgSegmentBlackColor, imgArrayROI, boudingRect
-
-def obj(imgROI):
-    # Define thresholds for channel 1 based on histogram settings
-    channel1Min = 0.0 * 360
-    channel1Max = 1.0 * 360
-
-    # Define thresholds for channel 2 based on histogram settings
-    channel2Min = 0.387 * 255
-    channel2Max = 1.000 * 255
-
-    # Define thresholds for channel 3 based on histogram settings
-    channel3Min = 0.0 * 255
-    channel3Max = 1.000 * 255
-
-    imgObj = np.zeros_like(imgROI)
-    hsv = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
-    imgObj = cv2.inRange(
-        hsv, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
+    # draw boundary box of objet
+    # x, y, w, h = cv2.boundingRect(big_contour)
+    # # draw the 'human' contour (in green)
+    # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    # object segmentation from shadow by threshold in hsv color space
+    imgObj = OpeningObj(imgMaskOut)
     contours, hierarchy = cv2.findContours(
         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
-    cv2.drawContours(imgObj, [big_contour], 0, 255, -1)
-    imgObj = cv2.medianBlur(
-                        imgObj, 9)
-    if debug == True:
-        cv2.imshow("Median Filtering", imgObj)
-    return imgObj
+        cv2.drawContours(imgObj, [big_contour], 0, 255, -1)
 
-
-def shadow(imgROI, imgObj):
-    imgShadow = np.zeros_like(imgObj)
-    imgROI = cv2.cvtColor(imgROI, cv2.COLOR_BGR2GRAY)
-    ret, imgROI = cv2.threshold(imgROI, 1, 255, cv2.THRESH_BINARY)
-    cv2.imshow("Input Shadow Image", imgROI)
-    imgShadow = cv2.bitwise_xor(imgObj, imgROI)
-    cv2.imshow("EX OR", imgShadow)
-    # cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8), iterations=30)
-
-    imgShadow = cv2.erode(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
-    imgShadow = cv2.dilate(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
-    # contours, hierarchy = cv2.findContours(
-    #     imgShadow, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-
-    # Contour filtering to get largest area
-    # area_thresh = 0
-    # for c in contours:
-    #     area = cv2.contourArea(c)
-    #     if area > area_thresh:
-    #         area = area_thresh
-    #         big_contour = c
-    # imgOut= np.zeros_like(imgObj)
-    # if len(contours) != 0:
-    #     # find the biggest area of the contour
-    #     big_contour = max(contours, key=cv2.contourArea)
-        
         # x, y, w, h = cv2.boundingRect(big_contour)
-        # imgShadow = cv2.medianBlur(imgShadow, 9)
-        # cropped_contour = imgShadow[y:y+h, x:x+w]
+
+        # # find centroid by image moment
+        # M = cv2.moments(big_contour)
+        # cx = int(M['m10']/M['m00'])
+        # cy = int(M['m01']/M['m00'])
+        # # cv2.circle(imgObj, (cx, cy), 5, (0), -1)
+
+        # ellipse = cv2.fitEllipse(big_contour)
+        # # imgObj = cv2.ellipse(imgObj, ellipse, 255, 1)
+        # # imgObj = cv2.blur(imgObj, (10, 10))
+        # imgObj = cv2.medianBlur(imgObj, 9)
+        # cropped_contour = imgObj[y:y+h, x:x+w]
+        if debug == True:
+            cv2.imshow("Median Filtering", imgObj)
+    return imgObj, [x, y, w, h]
+
+
+def shadow(imgOpening, imgObj):
+    imgOut = np.zeros_like(imgObj)
+    # # morphology a little bit to imgObj
+    # imgOpening = cv2.cvtColor(imgOpening, cv2.COLOR_BGR2GRAY)
+    # ret, imgOpening = cv2.threshold(imgOpening, 50, 255, cv2.THRESH_BINARY)
+    cv2.imshow("Input Shadow Image", imgOpening)
+    print(imgOpening.shape, imgObj.shape)
+    imgShadow = cv2.bitwise_xor(imgOpening, imgObj)
+    # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
+    #                              np.ones((15, 15), np.uint8))
+    cv2.imshow("EX OR", imgShadow)
+
+    # imgShadow = cv2.erode(imgShadow, np.ones((16, 16), np.uint8), iterations=1)
+    contours, hierarchy = cv2.findContours(
+        imgShadow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if len(contours) != 0:
+        # find the biggest area of the contour
+        big_contour = max(contours, key=cv2.contourArea)
+        cv2.drawContours(imgOut, [big_contour], 0, 255, -1)
+        # x, y, w, h = cv2.boundingRect(big_contour)
+        # imgOut = cv2.medianBlur(imgOut, 9)
+        # cropped_contour = imgOut[y:y+h, x:x+w]
         # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
         #                              np.ones((15, 15), np.uint8))
-    # cv2.drawContours(imgShadow, big_contour, 0, 255, 1)
-    return imgShadow
+    return imgOut
 
 
 def OpeningObj(img):
     # Define thresholds for channel 1 based on histogram settings
-    channel1Min = 0.189 * 360
-    channel1Max = 0.522 * 360
+    channel1Min = 0.189 * 255
+    channel1Max = 0.522 * 255
 
     # Define thresholds for channel 2 based on histogram settings
     channel2Min = 0.209 * 255
@@ -134,7 +119,7 @@ def OpeningObj(img):
     channel3Max = 1.000 * 255
 
     imgOpeninged = np.zeros_like(img)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV_FULL)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     imgOpeninged = cv2.inRange(
         hsv, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
     return imgOpeninged

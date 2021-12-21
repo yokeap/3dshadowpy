@@ -96,65 +96,6 @@ class camgrab:
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
         return loadConfig
 
-    # def gen_frames(self):
-    #     while True:
-    #         if self.cap != 0:
-    #             success, self.frame = self.cap.read()
-    #             self.success = success
-    #             if success:
-    #                 self.success = False
-    #                 # frame=cv2.flip(frame,1)
-    #                 # if camOpen == False:
-    #                 #     break
-    #                 self.diffImage = cv2.cvtColor(
-    #                     self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
-    #                 # self.diffImage = cv2.absdiff(cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY), cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY))
-    #                 ret, self.imgDiffBin = cv2.threshold(
-    #                     self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
-    #                 self.imgAnd = cv2.bitwise_and(
-    #                     self.imgDiffBin, self.diffImage)
-    #                 ret, self.imgBin = cv2.threshold(
-    #                     self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
-    #                 self.imgOpening = cv2.morphologyEx(
-    #                     self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-    #                 self.imgOpening = cv2.medianBlur(
-    #                     self.imgOpening, self.medianBlur)
-    #                 self.imgSegmentBin, posCrop = segmentation.objShadow(
-    #                     self.frame, self.imgOpening)
-
-    #                 for crop in posCrop:
-    #                     if not crop[0] < 1 or crop[1] < 1:
-    #                         cv2.rectangle(self.imgSegmentBin, (crop[0], crop[1]), (
-    #                             crop[0]+crop[2], crop[1]+crop[3]), (255, 255, 255), 2)
-    #                 # cv2.rectangle(self.imgSegmentBin, (crop[1], crop[2]), (crop[1]+crop[3], crop[2]+crop[4]), (0, 255, 0), 2)
-    #                 # print(crop)
-    #                 try:
-    #                     if self.feedStatus == "rawImage":
-    #                         ret, buffer = cv2.imencode('.jpg', self.frame)
-    #                     elif self.feedStatus == "subtractBackground":
-    #                         ret, buffer = cv2.imencode('.jpg', self.diffImage)
-    #                     elif self.feedStatus == "binaryImage":
-    #                         ret, buffer = cv2.imencode('.jpg', self.imgDiffBin)
-    #                     elif self.feedStatus == "andImage":
-    #                         ret, buffer = cv2.imencode('.jpg', self.imgAnd)
-    #                     elif self.feedStatus == "morphologyImage":
-    #                         ret, buffer = cv2.imencode('.jpg', self.imgOpening)
-    #                     elif self.feedStatus == "segmentImage":
-    #                         ret, buffer = cv2.imencode(
-    #                             '.jpg', self.imgSegmentBin)
-    #                     else:
-    #                         ret, buffer = cv2.imencode('.jpg', self.frame)
-    #                     frameByte = buffer.tobytes()
-    #                     yield (b'--frame\r\n'
-    #                            b'Content-Type: image/jpeg\r\n\r\n' + frameByte + b'\r\n')
-    #                     # return frameByte
-    #                 except Exception as e:
-    #                     pass
-    #             else:
-    #                 pass
-    #         else:
-    #             pass
-
     def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed):
         while True:
             if self.cap != 0:
@@ -182,6 +123,7 @@ class camgrab:
                     imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(
                         frame, imgOpening)
                     segmentSourceFeed.put(imgSegmentSource)
+
                 else:
                     pass
             else:

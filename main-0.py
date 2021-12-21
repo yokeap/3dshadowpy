@@ -1,9 +1,7 @@
 
-from calFunction import segmentation, reconstruct
+from calfunc import segmentation, reconstruct
 from mpl_toolkits import mplot3d
 import cv2
-import os
-import datetime
 import numpy as np
 from skimage.morphology import skeletonize
 import matplotlib.pyplot as plot
@@ -65,34 +63,10 @@ imgOpening = cv2.medianBlur(imgOpening, 9)
 if debug == True:
     cv2.imshow("Morphology", imgOpening)
 
-imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(
-    imgSample, imgOpening)
-print(posCrop[0])
-if debug == True:
-    cv2.imshow("ROI", imgROI[0])
-
-imgObj = segmentation.obj(imgROI[0])
-if debug == True:
-    cv2.imshow("Object Image", imgObj)
-
-imgShadow = segmentation.shadow(imgROI[0], imgObj)
-if debug == True:
-    cv2.imshow("Shadow Image", imgShadow)
-
 objReconstruct = reconstruct.ObjReconstruction(
-    imgSample, homographyMatrix, virLightPosIMG, virLightPos, scale)
-objReconstruct.reconstruct(imgSegmentBlack, imgObj, imgShadow, posCrop)
+    imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos, scale)
+objReconstruct.reconstruct()
 objReconstruct.reconstructVolume(0.05)
-
-
-# p = os.path.sep.join(
-#     ['capture', "shot_{}.jpg".format(str(datetime.datetime.now()).replace(":", ''))])
-# cv2.imwrite(p, imgROI[0])
-
-# objReconstruct = reconstruct.ObjReconstruction(
-#     imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos, scale)
-# objReconstruct.reconstruct()
-# objReconstruct.reconstructVolume(0.05)
 
 
 end = time.time()
@@ -102,8 +76,7 @@ print("processed time = ", (end - start), "s")
 # objReconstruct.imgChart_3d()
 # objReconstruct.worldChart_3d()
 # objReconstruct.pointCloudChart_3d()
-
-# objReconstruct.volumeChart(end - start)
+objReconstruct.volumeChart(end - start)
 
 
 cv2.waitKey(0)

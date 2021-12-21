@@ -1,7 +1,12 @@
 body {
     background-color: #121212;
+    overflow: hidden;
   }
 
 .inputTextBox {
     max-width: 100%;
+}
+
+.process-view::-webkit-scrollbar {
+  display: none;
 }
