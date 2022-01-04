@@ -71,7 +71,7 @@ print(posCrop[0])
 if debug == True:
     cv2.imshow("ROI", imgROI[0])
 
-imgObj = segmentation.obj(imgROI[0])
+imgObj, imgObjColor = segmentation.obj(imgROI[0])
 if debug == True:
     cv2.imshow("Object Image", imgObj)
 
@@ -79,15 +79,19 @@ imgShadow = segmentation.shadow(imgROI[0], imgObj)
 if debug == True:
     cv2.imshow("Shadow Image", imgShadow)
 
+imgShadowOnObj = segmentation.shadowEdgeOnObj(imgObjColor)
+if debug == True:
+    cv2.imshow("Shadow On Obj", imgShadowOnObj)
+
 objReconstruct = reconstruct.ObjReconstruction(
     imgSample, homographyMatrix, virLightPosIMG, virLightPos, scale)
-objReconstruct.reconstruct(imgSegmentBlack, imgObj, imgShadow, posCrop)
+objReconstruct.reconstruct(imgObj, imgShadowOnObj, imgShadow , posCrop)
 objReconstruct.reconstructVolume(0.05)
 
 
 # p = os.path.sep.join(
 #     ['capture', "shot_{}.jpg".format(str(datetime.datetime.now()).replace(":", ''))])
-# cv2.imwrite(p, imgROI[0])
+# cv2.imwrite(p, imgObjColor)
 
 # objReconstruct = reconstruct.ObjReconstruction(
 #     imgSample, imgOpening, homographyMatrix, virLightPosIMG, virLightPos, scale)
@@ -103,7 +107,7 @@ print("processed time = ", (end - start), "s")
 # objReconstruct.worldChart_3d()
 # objReconstruct.pointCloudChart_3d()
 
-# objReconstruct.volumeChart(end - start)
+objReconstruct.volumeChart(end - start)
 
 
 cv2.waitKey(0)

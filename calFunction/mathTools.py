@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from scipy import interpolate
+from scipy.interpolate import LSQUnivariateSpline
 
 
 def magnitudeCompute3D(origin, destination):

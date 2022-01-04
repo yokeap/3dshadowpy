@@ -120,7 +120,7 @@ class ObjReconstruction:
                     posUpper = [x, y, 1]
                     posUpperWorld = mathTools.homographyTransform(
                         self.homographyMatrix, posUpper, self.scale)
-                    self.edgeObjUpper.append(np.array(posUpper))
+                    self.edgeObjUpper.append(posUpper)
                     self.edgeObjUpperWorld.append(posUpperWorld)
                     self.ptCloudSectionLeft[self.loop, :] = posUpperWorld
                     # #  centroid edges (from skeleton image), then lower edges (object image) and then lower edges of shadow (max shadow distance)
@@ -129,7 +129,7 @@ class ObjReconstruction:
                     posCentroid = [x, y, 1]
                     posCentroidWorld = mathTools.homographyTransform(
                         self.homographyMatrix, posCentroid, self.scale)
-                    self.edgeObjMiddle.append(np.array(posCentroid))
+                    self.edgeObjMiddle.append(posCentroid)
                     self.edgeObjMiddleWorld.append(posCentroidWorld)
                     self.ptCloudObjHeightUpper[self.loop, :] = posCentroidWorld
                     self.ptCloudObjHeightLower[self.loop, :] = posCentroidWorld
@@ -156,7 +156,7 @@ class ObjReconstruction:
                             posShadowLowerWorld = mathTools.homographyTransform(
                                 self.homographyMatrix, posShadowLower, self.scale)
                             self.edgesShadowLower.append(
-                                np.array(posShadowLower))
+                                posShadowLower)
                             self.edgesShadowLowerWorld.append(
                                 posShadowLowerWorld)
                             # self.ptCloudSectionRight[loop,
@@ -168,19 +168,19 @@ class ObjReconstruction:
                             posShadowUpperWorld = mathTools.homographyTransform(
                                 self.homographyMatrix, posShadowUpper, self.scale)
                             self.edgesShadowUpper.append(
-                                np.array(posShadowUpper))
+                                posShadowUpper)
                             self.edgesShadowUpperWorld.append(
                                 posShadowUpperWorld)
                             skeletonHeight = mathTools.calHeightFromShadow(
                                 posShadowUpper, posCentroid, posShadowUpperWorld, posCentroidWorld, self.posVirlightWorld)
                             self.ptCloudSectionLeft[self.loop,
-                                                    2] = skeletonHeight / 2
+                                                    2] = 0
                             self.ptCloudSectionRight[self.loop,
-                                                     2] = skeletonHeight / 2
+                                                     2] = 0
                             self.ptCloudObjHeightUpper[self.loop,
-                                                       2] = skeletonHeight
+                                                       2] = skeletonHeight / 2
                             self.ptCloudObjHeightLower[self.loop,
-                                                       2] = 0
+                                                       2] = self.ptCloudObjHeightUpper[self.loop, 2] * -1
                             self.loop = self.loop + 1
                             break
                 # for lower edges
@@ -189,7 +189,7 @@ class ObjReconstruction:
                     posLower = [x, y, 1]
                     posLowerWorld = mathTools.homographyTransform(
                         self.homographyMatrix, posLower, 0.2)
-                    self.edgeObjLower.append(np.array(posLower))
+                    self.edgeObjLower.append(posLower)
                     self.edgeObjLowerWorld.append(posLowerWorld)
                     self.ptCloudSectionRight[self.loop, 0] = posLowerWorld[0]
                     self.ptCloudSectionRight[self.loop, 1] = posLowerWorld[1]
@@ -306,30 +306,34 @@ class ObjReconstruction:
             figSpline.show()
 
     def imgChart_3d(self):
+
         imgObjEdgeUpper = np.array(self.edgeObjUpper)
         imgObjEdgeMiddle = np.array(self.edgeObjMiddle)
         imgObjEdgeLower = np.array(self.edgeObjLower)
         imgShadowEdgesUpper = np.array(self.edgesShadowUpper)
         imgShadowEdgesLower = np.array(self.edgesShadowLower)
 
+        print("imgObjEdgeUpper size = ", imgObjEdgeUpper[1:10, 0])
+
         figIMG = plot.figure()
         imageCoordinate = plot.axes(projection='3d')
+        # imageCoordinate = figIMG.add_subplot(projection='3d')
 
-        imageCoordinate.scatter(imgObjEdgeUpper[:, 0], imgObjEdgeUpper[:, 1],
-                                imgObjEdgeUpper[:, 2], s=[0.1], label='Upper Edge')
-        imageCoordinate.scatter(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
-                                imgObjEdgeMiddle[:, 2], s=[0.1], label='Middle Edge')
-        imageCoordinate.scatter(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
-                                imgObjEdgeLower[:, 2], s=[0.1], label='Lower Edge')
-        imageCoordinate.scatter(imgShadowEdgesLower[:, 0], imgShadowEdgesLower[:, 1],
-                                imgShadowEdgesLower[:, 2], s=[0.1], label='Shadow Lower Edge')
-        imageCoordinate.scatter(imgShadowEdgesUpper[:, 0], imgShadowEdgesUpper[:, 1],
-                                imgShadowEdgesUpper[:, 2], s=[0.1], label='Shadow Upper Edge')
+        imageCoordinate.scatter(imgObjEdgeUpper[1:10, 0], imgObjEdgeUpper[1:10, 1],
+                                imgObjEdgeUpper[1:10, 2], s=[0.1], label='Upper Edge')
+        # imageCoordinate.scatter(imgObjEdgeMiddle[:, 0], imgObjEdgeMiddle[:, 1],
+        #                         imgObjEdgeMiddle[:, 2], s=[0.1], label='Middle Edge')
+        # imageCoordinate.scatter(imgObjEdgeLower[:, 0], imgObjEdgeLower[:, 1],
+        #                         imgObjEdgeLower[:, 2], s=[0.1], label='Lower Edge')
+        # imageCoordinate.scatter(imgShadowEdgesLower[:, 0], imgShadowEdgesLower[:, 1],
+        #                         imgShadowEdgesLower[:, 2], s=[0.1], label='Shadow Lower Edge')
+        # imageCoordinate.scatter(imgShadowEdgesUpper[:, 0], imgShadowEdgesUpper[:, 1],
+        #                         imgShadowEdgesUpper[:, 2], s=[0.1], label='Shadow Upper Edge')
         # draw line from virtual light source position to head and tail shadow position
         # shadow head
-        for i in range(0, imgShadowEdgesUpper.shape[0], 100):
-            imageCoordinate.plot([self.posVirlightIMG[0], imgShadowEdgesUpper[i, 0]], [self.posVirlightIMG[1], imgShadowEdgesUpper[i, 1]],
-                                 [self.posVirlightIMG[2], imgShadowEdgesUpper[i, 2]])
+        # for i in range(0, imgShadowEdgesUpper.shape[0], 100):
+        #     imageCoordinate.plot([self.posVirlightIMG[0], imgShadowEdgesUpper[i, 0]], [self.posVirlightIMG[1], imgShadowEdgesUpper[i, 1]],
+        #                          [self.posVirlightIMG[2], imgShadowEdgesUpper[i, 2]])
         imageCoordinate.set_xlabel('x (Pixels)')
         imageCoordinate.set_ylabel('y (Pixels)')
         imageCoordinate.set_zlabel('z (mm)')

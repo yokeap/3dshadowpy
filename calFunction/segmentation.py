@@ -29,7 +29,7 @@ def objShadow(imgSource, imgOpening):
     y = 0
     w = 0
     h = 0
-    margin = 5
+    margin = 60
     boudingRect = []
     imgArrayROI = []
 
@@ -44,8 +44,8 @@ def objShadow(imgSource, imgOpening):
         imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     for contour in contours:
         (x, y, w, h) = cv2.boundingRect(contour)
-        OriginX = x - margin
-        OriginY = y - margin
+        OriginX = x - round(margin / 2)
+        OriginY = y - round(margin / 2)
         Width = w + margin
         Height = h + margin
         # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
@@ -74,15 +74,19 @@ def obj(imgROI):
         hsv, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
     contours, hierarchy = cv2.findContours(
         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
-    cv2.drawContours(imgObj, [big_contour], 0, 255, -1)
-    imgObj = cv2.medianBlur(
-                        imgObj, 9)
-    if debug == True:
-        cv2.imshow("Median Filtering", imgObj)
-    return imgObj
+    cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+    # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    # masking process for image object with black backgroubd color
+    imgMask = np.zeros_like(imgROI)
+    imgMask[:, :, 0] = imgObj
+    imgMask[:, :, 1] = imgObj
+    imgMask[:, :, 2] = imgObj
+    imgObjColor = cv2.bitwise_and(imgMask, imgROI)
+    return imgObj, imgObjColor
 
 
 def shadow(imgROI, imgObj):
@@ -92,10 +96,10 @@ def shadow(imgROI, imgObj):
     cv2.imshow("Input Shadow Image", imgROI)
     imgShadow = cv2.bitwise_xor(imgObj, imgROI)
     cv2.imshow("EX OR", imgShadow)
-    # cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8), iterations=30)
+    imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8), iterations=1)
 
-    imgShadow = cv2.erode(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
-    imgShadow = cv2.dilate(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
+    # imgShadow = cv2.erode(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
+    # imgShadow = cv2.dilate(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
     # contours, hierarchy = cv2.findContours(
     #     imgShadow, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -197,5 +201,33 @@ def pseudoSkeleton(imgObj):
         pos_2 = (int(rectHalfVerticesRightX), int(rectHalfVerticesRightY))
         imgPseudoSkel = cv2.line(
             imgPseudoSkel, pos_1, pos_2, (255), 1)
+        return posOrigin, posDestination, imgPseudoSkel
 
-    return posOrigin, posDestination, imgPseudoSkel
+
+def shadowEdgeOnObj(imgObjColor):
+    # Define thresholds for channel 1 based on histogram settings
+    channel1Min = 0.192 * 360
+    channel1Max = 0.539 * 360
+
+    # Define thresholds for channel 2 based on histogram settings
+    channel2Min = 0.240 * 255
+    channel2Max = 1.000 * 255
+
+    # Define thresholds for channel 3 based on histogram settings
+    channel3Min = 0.0 * 255
+    channel3Max = 0.253 * 255
+
+    imgShadowOnObj = np.zeros_like(imgObjColor)
+    hsv = cv2.cvtColor(imgObjColor, cv2.COLOR_BGR2HSV_FULL)
+    imgShadowOnObj = cv2.inRange(
+        hsv, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
+    contours, hierarchy = cv2.findContours(
+        imgShadowOnObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    if len(contours) != 0:
+        # find the biggest area of the contour
+        big_contour = max(contours, key=cv2.contourArea)
+    cv2.drawContours(imgShadowOnObj, big_contour, 0, 255, -1)
+    # imgShadowOnObj = cv2.erode(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
+    # imgShadowOnObj = cv2.dilate(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
+    imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    return imgShadowOnObj
