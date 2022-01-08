@@ -1,4 +1,5 @@
-
+# this is calculation base on shadow on object and use 4 points spline estimation from upper and lower, mirror upper
+# and lower points are calculate from upper or lower point from height estimate of ray casting from shadow on object. 
 from calFunction import segmentation, reconstruct
 from mpl_toolkits import mplot3d
 import cv2

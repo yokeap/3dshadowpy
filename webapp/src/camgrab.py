@@ -5,7 +5,9 @@ import datetime
 import time
 import os
 import sys
+import json
 import numpy as np
+import pandas as pd
 from skimage.morphology import skeletonize
 from . import mathTools
 from . import segmentation
@@ -34,14 +36,15 @@ from . import segmentation
 
 class camgrab:
 
-    def __init__(self, config):
+    def __init__(self, config, socket):
         self.cap = cv2.VideoCapture(0)
         self.setConfigDefault(config)
         self.imgBg = cv2.imread("./ref/background.jpg")
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = 240
         self.imgAndBinTreshold = 50
-        self.medianBlur = 12
+        self.medianBlur = 9
+        self.socket = socket
 
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
@@ -55,9 +58,10 @@ class camgrab:
         self.queueImgAndFeed = queue.Queue()
         self.queueMorphFeed = queue.Queue()
         self.segmentSourceFeed = queue.Queue()
+        self.queueHSVFeed = queue.Queue()
 
         self.threadGenFrames = Thread(target=self.gen_frames, args=(
-            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, self.queueMorphFeed, self.segmentSourceFeed), daemon=True)
+            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, self.queueMorphFeed, self.segmentSourceFeed, self.queueHSVFeed), daemon=True)
         # self.threadRawFeed = Thread(target=self.thread_raw_feed)
 
     def setConfigDefault(self, config):
@@ -96,7 +100,8 @@ class camgrab:
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
         return loadConfig
 
-    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed):
+    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed, queueHSVFeed):
+        hsvJson = {}
         while True:
             if self.cap != 0:
                 success, frame = self.cap.read()
@@ -123,7 +128,21 @@ class camgrab:
                     imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(
                         frame, imgOpening)
                     segmentSourceFeed.put(imgSegmentSource)
-
+                    if len(imgROI) > 0:
+                        if len(imgROI[0]) > 0:
+                            imageHSV = cv2.cvtColor(imgROI[0], cv2.COLOR_BGR2HSV_FULL)
+                            h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+                            # df=pd.DataFrame(h, columns=["x", "y"])
+                            h = np.transpose(cv2.calcHist([h],[0],None,[360],[0,360]))
+                            s = np.transpose(cv2.calcHist([s],[0],None,[256],[0,256]))
+                            v = np.transpose(cv2.calcHist([v],[0],None,[256],[0,256]))
+                            hsvJson['hist_h'] = h.tolist()
+                            hsvJson['hist_h_ymax'] = (np.mean(h) + 3 * np.std(h)).tolist()
+                            hsvJson['hist_s'] = s.tolist()
+                            hsvJson['hist_s_ymax'] = (np.mean(h) + 3 * np.std(h)).tolist()
+                            hsvJson['hist_v'] = v.tolist()
+                            hsvJson['hist_v_ymax'] = (np.mean(h) + 3 * np.std(h)).tolist()
+                            self.socket.emit('hsv-data', json.dumps(hsvJson))
                 else:
                     pass
             else:
@@ -177,6 +196,20 @@ class camgrab:
             ret, buffer = cv2.imencode('.jpg', frame)
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    # def hsv_feed(self):
+    #     hsvJson = {
+    #         "message": "test"
+    #     }
+    #     while True:
+    #         frame = self.queueHSVFeed.get()
+    #         h, s, v = frame [:,:,0], frame [:,:,1], frame [:,:,2]
+    #         # hsvJson["hue"] = h
+    #         # hsvJson["saturate"] = s 
+    #         # hsvJson["value"] = v
+    #         print(hsvJson)
+    #         return json.dumps(hsvJson)
+        
 
     def shotSetting(self):
         if not self.cap.isOpened():

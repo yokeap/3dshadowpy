@@ -1,4 +1,8 @@
+from logging import debug
 from flask import Flask, render_template, Response, request, send_from_directory, jsonify
+from flask_socketio import SocketIO
+from time import sleep
+from math import sqrt
 import plotly
 import plotly.graph_objs as go
 from src import camgrab
@@ -11,6 +15,7 @@ import pandas as pd
 import numpy as np
 
 app = Flask(__name__, template_folder='./view', static_folder='./view')
+socketio = SocketIO(app)
 
 global config
 
@@ -18,32 +23,16 @@ global config
 with open('./config.json', 'r') as f:
     config = json.load(f)
 
-camera = camgrab.camgrab(config)
+camera = camgrab.camgrab(config, socketio)
 camera.threadGenFrames.do_run = False
 if camera.threadGenFrames.is_alive():
     camera.threadGenFrames.stop()
-# time.sleep(5)
-# camera.gen_frames()
 
-# def create_plot():
-
-
-#     N = 40
-#     x = np.linspace(0, 1, N)
-#     y = np.random.randn(N)
-#     df = pd.DataFrame({'x': x, 'y': y}) # creating a sample dataframe
-
-
-#     data = [
-#         go.Bar(
-#             x=df['x'], # assign x as the dataframe column 'x'
-#             y=df['y']
-#         )
-#     ]
-
-#     graphJSON = json.dumps(data, cls=plotly.utils.PlotlyJSONEncoder)
-
-#     return graphJSON
+def send_data():
+    result = {}
+    jsonData = request.get_json()
+    result['message'] = "success"
+    socketio.emit('data', json.dumps(result))
 
 @app.route('/')
 def index():
@@ -108,10 +97,9 @@ def saveHandler():
 def recvHandler():
     global rawImage, diffImage
     result = {}
-    jsonData = request.get_json()
     if request.method == 'POST':
         jsonData = request.get_json()
-        print(jsonData)
+        # print(jsonData)
 
         if  jsonData["browserEvent"] == "loaded":
             camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
@@ -132,9 +120,10 @@ def recvHandler():
 
         elif jsonData["browserEvent"] == "capture":
             # camera.shotSetting()
-            camera.captureAll()
+            # camera.captureAll()           #capture pic to directory
             result['message'] = "success"
-            return jsonify(result['message'])
+            # return jsonify(result['message'])
+            return result
 
         elif jsonData["browserEvent"] == "params":
             jsonData = request.get_json()
@@ -150,11 +139,9 @@ def recvHandler():
         elif jsonData["browserEvent"] == "feedStatus": 
             subtract_background_feed = jsonData["feed"]
             # subtract_background_feed = jsonData["feedStatus"]["subtractBackground"]
-
-    elif request.method == 'GET':
-        return render_template('index.html')
-    return render_template('index.html')
-
+    # elif request.method == 'GET':
+    #     return render_template('index.html')
+    return render_template('index.html')   
 
 @app.route('/raw_feed')
 def raw_feed():
@@ -179,13 +166,46 @@ def imgmorph():
 def imgsegentedcrop():
     return Response(camera.segmented_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+# @app.route('/imgroi')
+# def imgroi():
+#     return Response(camera.img)
+
 # @app.route('/config_feed')
 # def config_feed():
 #     # return Response(camera.thread_process_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 #     return Response(camera.gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
+
+# @app.route("/stream")
+# def stream():
+#     print("stream")
+#     result = {}
+#     def generate():
+#         # while True:
+#         # yield "{message: %s}" % ("success")
+#             # sleep(1)
+#         # for i in range(500):
+            
+#         #     sleep(1)
+#         result['message'] = "success"
+#         return json.dumps(result)
+
+
+#     return Response(generate(), mimetype="application/json")
+
+# @app.route("/stream", methods=['POST', 'GET'])
+# def stream():
+#     # jsonData = request.get_json()
+#     print("Stream")
+#     return Response(camera.hsv_feed(), mimetype="application/json")
+
+@socketio.on('my event')
+def handle_my_custom_event(json):
+    print('received json: ' + str(json))
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
+    # app.run(debug=True)
 
 camera.cap.release()
 print("process destroyed")

@@ -1,18 +1,50 @@
-if (chart_histH instanceof Chart) {
-    chart_histH.destroy();
+if (chart_histObjH instanceof Chart) {
+    chart_histObjH.destroy();
 }
 
-if (chart_histS instanceof Chart) {
-    chart_histS.destroy();
+if (chart_histObjS instanceof Chart) {
+    chart_histObjS.destroy();
 }
 
-if (chart_histV instanceof Chart) {
-    chart_histV.destroy();
+if (chart_histObjV instanceof Chart) {
+    chart_histObjV.destroy();
 }
 
-var chart_histH = new Chart(document.getElementById('histH'), {
+if (chart_histShadowH instanceof Chart) {
+    chart_histObjH.destroy();
+}
+
+if (chart_histShadowS instanceof Chart) {
+    chart_histObjS.destroy();
+}
+
+if (chart_histShadowV instanceof Chart) {
+    chart_histObjV.destroy();
+}
+
+socket.on('hsv-data', function (data) {
+    var JSON_received = JSON.parse(data);
+    // console.log(JSON_received.hist_h[0]);
+    if (chart_histObjH instanceof Chart) {
+        chart_histObjH.options.scales.y.max = JSON_received.hist_h_ymax
+        chart_histObjH.data.datasets[0].data = JSON_received.hist_h[0];
+        chart_histObjH.update();
+    }
+    if (chart_histObjS instanceof Chart) {
+        chart_histObjS.options.scales.y.max = JSON_received.hist_s_ymax
+        chart_histObjS.data.datasets[0].data = JSON_received.hist_s[0];
+        chart_histObjS.update();
+    }
+    if (chart_histObjV instanceof Chart) {
+        chart_histObjV.options.scales.y.max = JSON_received.hist_v_ymax
+        chart_histObjV.data.datasets[0].data = JSON_received.hist_v[0];
+        chart_histObjV.update();
+    }
+});
+
+const chartHConfig = {
     responsive: false,
-    maintainAspectRatio: false,
+    maintainAspectRatio: true,
     type: "line",
     data: {
         labels: _360num(),
@@ -24,7 +56,9 @@ var chart_histH = new Chart(document.getElementById('histH'), {
                 'rgba(153, 102, 255, 1)',
             ],
             data: [],
-            fill: 'origin'
+            fill: false,
+            borderWidth: 1,
+            pointRadius: 0,
         }]
     },
     options: {
@@ -39,6 +73,9 @@ var chart_histH = new Chart(document.getElementById('histH'), {
             },
             legend: {
                 display: false,
+            },
+            layout: {
+                padding: 0
             }
         },
         scales: {
@@ -69,9 +106,9 @@ var chart_histH = new Chart(document.getElementById('histH'), {
         }
 
     }
-});
+}
 
-var chart_histS = new Chart(document.getElementById('histS'), {
+const chartSConfig =  {
     responsive: false,
     maintainAspectRatio: false,
     type: "line",
@@ -85,7 +122,9 @@ var chart_histS = new Chart(document.getElementById('histS'), {
                 'rgba(153, 102, 255, 1)',
             ],
             data: [],
-            fill: 'origin'
+            fill: false,
+            borderWidth: 1,
+            pointRadius: 0,
         }]
     },
     options: {
@@ -130,9 +169,9 @@ var chart_histS = new Chart(document.getElementById('histS'), {
         }
 
     }
-});
+}
 
-var chart_histV = new Chart(document.getElementById('histV'), {
+const chartVConfig = {
     responsive: false,
     maintainAspectRatio: false,
     type: "line",
@@ -146,7 +185,9 @@ var chart_histV = new Chart(document.getElementById('histV'), {
                 'rgba(153, 102, 255, 1)',
             ],
             data: [],
-            fill: 'origin'
+            fill: false,
+            borderWidth: 1,
+            pointRadius: 0,
         }]
     },
     options: {
@@ -191,7 +232,14 @@ var chart_histV = new Chart(document.getElementById('histV'), {
         }
 
     }
-});
+}
+
+var chart_histObjH = new Chart(document.getElementById('histObjH'), chartHConfig)
+    ,chart_histObjS = new Chart(document.getElementById('histObjS'), chartSConfig)
+    ,chart_histObjV = new Chart(document.getElementById('histObjV'), chartVConfig)
+    ,chart_histShadowH = new Chart(document.getElementById('histShadowH'), chartHConfig)
+    ,chart_histShadowS = new Chart(document.getElementById('histShadowS'), chartSConfig)
+    ,chart_histShadowV = new Chart(document.getElementById('histShadowV'), chartVConfig);
 
 function generateData(hist) {
     var xValues = [];

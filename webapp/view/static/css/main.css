@@ -1,6 +1,11 @@
+html {
+  margin:    0 auto;
+  max-width: 100%;
+}
 body {
     background-color: #121212;
     overflow: hidden;
+    max-width: 100%;
   }
 
 .inputTextBox {
@@ -9,4 +14,44 @@ body {
 
 .process-view::-webkit-scrollbar {
   display: none;
+}
+
+.vranger {
+  margin-top: 1%;
+  padding-left: -5%;
+   transform: rotate(270deg);
+  -moz-transform: rotate(270deg); /*do same for other browsers if required*/
+}
+
+.slider-styled,
+.slider-styled .noUi-handle {
+    box-shadow: none;
+}
+
+/* Hide markers on slider handles */
+.slider-styled .noUi-handle::before,
+.slider-styled .noUi-handle::after {
+    display: none;
+}
+
+.slider-round {
+  height: 10px;
+}
+
+.slider-round .noUi-connect {
+  background: #c0392b;
+}
+
+.slider-round .noUi-handle {
+  height: 18px;
+  width: 18px;
+  top: -5px;
+  right: -9px; /* half the width */
+  border-radius: 9px;
+}
+
+.slider-hsv {
+  margin-top: 2%;
+  margin-left: 6%;
+  width: 75%;
 }
