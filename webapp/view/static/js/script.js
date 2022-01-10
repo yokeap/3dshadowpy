@@ -1,8 +1,9 @@
-var subTreshVal = document.getElementById("subTreshVal"),
-    subTreshValText = document.getElementById("subTreshValText");
+var subtractTreshVal = document.getElementById("subtractTreshVal"),
+    subtractTreshValText = document.getElementById("subtractTreshValText"),
+    imgAndTreshValText = document.getElementById("imgAndTreshValText");
 
 var jsonData = {
-    imgDiffBinTreshold: parseInt(subTreshVal.value),
+    imgDiffBinTreshold: parseInt(subtractTreshVal.value),
     imgAndBinTreshold: parseInt(imgAndTreshVal.value),
     medianBlur: parseInt(medBlurVal.value),
     objShadowTresholdVal: parseInt(objShadowTreshVal.value),
@@ -51,25 +52,24 @@ var ranges = document.querySelectorAll('input[type=range]');
 ranges.forEach(
     range => range.addEventListener('input', () => {
             // console.log(range.id);
-            jsonData.browserEvent = "changeProcessVal";
-            if(range.id == "subTreshVal"){
-                subTreshValText.value = range.value;
-                jsonData.imgDiffBinTreshold = parseInt(range.value);
+            if(range.id == "subtractTreshVal"){
+                subtractTreshValText.value = range.value
+                socket.emit('process-value', JSON.stringify({ subtractTreshVal : range.value }))
             }
             else if (range.id == "imgAndTreshVal"){
                 imgAndTreshValText.value = range.value;
-                jsonData.imgAndBinTreshold = parseInt(range.value);
+                socket.emit('process-value', JSON.stringify({ imgAndTreshVal : range.value }))
             }
             else if (range.id == "medBlurVal"){
                 medBlurValText.value = range.value;
-                jsonData.medianBlur = parseInt(range.value);
+                socket.emit('process-value', JSON.stringify({ medBlurVal : range.value }))
             }
             else if (range.id == "objShadowTreshVal"){
                 objShadowTreshValText.value = range.value;
-                jsonData.objShadowTresholdVal = parseInt(range.value);
+                socket.emit('process-value', JSON.stringify({ objShadowTreshVal : range.value }))
             }
-            postjsonServ(jsonData);
-            jsonData.browserEvent = "normal";
+            // postjsonServ(jsonData);
+            // jsonData.browserEvent = "normal";
         }
     )
 );
@@ -105,14 +105,7 @@ texts.forEach(
 var radios = document.querySelectorAll('input[type=radio]');
 radios.forEach(
     radio => radio.addEventListener('change', () => {
-            // alert("radio.value");
-            // if(radio.value == "subtractBackground"){
-            //     jsonData.feedStatus.subtractBackground = ;
-            // }
-            jsonData.browserEvent = "changeFeed";
-            jsonData.feedStatus = radio.value;
-            postjsonServ(jsonData);
-            jsonData.browserEvent = "normal";
+            socket.emit('feed-status', JSON.stringify({ feedStatus : radio.value }))
         }
     )
 );
@@ -124,18 +117,15 @@ function saveCapture(){
 }
 
 function saveParams(){
-    jsonData.browserEvent = "params";
-    postjsonServ(jsonData);
-    jsonData.browserEvent = "normal";
+    socket.emit('save-config', JSON.stringify({ saveParams : true }))
 }
 
 
 
 document.addEventListener('DOMContentLoaded', (event) => {
-    subTreshValText.value = subTreshVal.value;
+    subtractTreshValText.value = subtractTreshVal.value;
     objShadowTreshValText.value = objShadowTreshVal.value;
     medBlurValText.value = medBlurVal.value;
-
     jsonData.browserEvent = "loaded";
     postjsonServ(jsonData);
 })

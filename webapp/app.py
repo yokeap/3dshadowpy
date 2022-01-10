@@ -95,52 +95,6 @@ def saveHandler():
 
 @app.route('/requests', methods=['POST', 'GET'])
 def recvHandler():
-    global rawImage, diffImage
-    result = {}
-    if request.method == 'POST':
-        jsonData = request.get_json()
-        # print(jsonData)
-
-        if  jsonData["browserEvent"] == "loaded":
-            camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
-            camera.imgAndBinTreshold =  config['imgAndBinTreshold']
-            camera.medianBlur = config['medianBlur']
-            print("loaded")
-
-        elif jsonData["browserEvent"] == "changeFeed":
-            camera.feedStatus = jsonData["feedStatus"]
-            print("change feed")
-
-        elif jsonData["browserEvent"] == "changeProcessVal":
-            camera.feedStatus = jsonData["feedStatus"]
-            camera.imgDiffBinTreshold = jsonData['imgDiffBinTreshold']
-            camera.imgAndBinTreshold = jsonData['imgAndBinTreshold']
-            camera.medianBlur = jsonData['medianBlur']
-            print("change process value")
-
-        elif jsonData["browserEvent"] == "capture":
-            # camera.shotSetting()
-            # camera.captureAll()           #capture pic to directory
-            result['message'] = "success"
-            # return jsonify(result['message'])
-            return result
-
-        elif jsonData["browserEvent"] == "params":
-            jsonData = request.get_json()
-            # write it back to the file
-            with open('./config.json', 'w') as f:
-                json.dump(merge(config, jsonData), f)
-            result['message'] = "success"
-
-        elif jsonData["browserEvent"] == "closed":
-            # camera.camRelease()
-            print("closed")
-
-        elif jsonData["browserEvent"] == "feedStatus": 
-            subtract_background_feed = jsonData["feed"]
-            # subtract_background_feed = jsonData["feedStatus"]["subtractBackground"]
-    # elif request.method == 'GET':
-    #     return render_template('index.html')
     return render_template('index.html')   
 
 @app.route('/raw_feed')
@@ -199,9 +153,51 @@ def imgsegentedcrop():
 #     print("Stream")
 #     return Response(camera.hsv_feed(), mimetype="application/json")
 
-@socketio.on('my event')
-def handle_my_custom_event(json):
-    print('received json: ' + str(json))
+@socketio.on('connect')
+def connect_event():
+    camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
+    camera.imgAndBinTreshold =  config['imgAndBinTreshold']
+    camera.medianBlur = config['medianBlur']
+    print('socket has been connected')
+
+@socketio.on('disconnect')
+def disconnect_event():
+    print('socket has been disconnected')
+
+@socketio.on('feed-status')
+def fedd_status_handle(jsonData):
+    pyObj = json.loads(jsonData)
+    camera.feedStatus = pyObj["feedStatus"]
+    print("main streaming has been changed to ", pyObj["feedStatus"])
+
+@socketio.on('process-value')
+def process_value_handle(jsonData):
+    pyObj = json.loads(jsonData)
+    camera.imgDiffBinTreshold = jsonData['subtractTreshVal']
+    camera.imgAndBinTreshold = jsonData['imgAndBinTreshold']
+    camera.medianBlur = jsonData['medianBlur']
+    print("main streaming has been changed to ", pyObj )
+
+
+@socketio.on('slider-obj-hsv')
+def slider_obj_hsv_event(jsonData):
+    pyObj = json.loads(jsonData)
+    # print('received json: ' + str(json))
+    # print(pyObj['objH'][0])
+
+@socketio.on('save-config')
+def save_config_handle(jsonData):
+    pyObj = json.loads(jsonData)
+    if pyObj['saveParams'] == True:
+        print("all of config has been saved")
+        with open('./config.json', 'w') as f:
+            json.dump(merge(config, jsonData), f)
+
+@socketio.on('capture')
+def capture_handle(jsonData):
+    pyObj = json.loads(jsonData)
+    if pyObj['capture'] == True:
+        camera.captureAll()           #capture pic to directory
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

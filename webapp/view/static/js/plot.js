@@ -27,7 +27,7 @@ socket.on('hsv-data', function (data) {
     // console.log(JSON_received.hist_h[0]);
     if (chart_histObjH instanceof Chart) {
         chart_histObjH.options.scales.y.max = JSON_received.hist_h_ymax
-        chart_histObjH.data.datasets[0].data = JSON_received.hist_h[0];
+        chart_histObjH.data.datasets[0].data[0] = JSON_received.hist_h[0];
         chart_histObjH.update();
     }
     if (chart_histObjS instanceof Chart) {
@@ -54,6 +54,18 @@ const chartHConfig = {
             ],
             borderColor: [
                 'rgba(153, 102, 255, 1)',
+            ],
+            data: [],
+            fill: false,
+            borderWidth: 1,
+            pointRadius: 0,
+        },
+        {
+            backgroundColor: [
+                'rgba(153, 102, 255, 1)',
+            ],
+            borderColor: [
+                'rgba(0, 255, 0, 1)',
             ],
             data: [],
             fill: false,
