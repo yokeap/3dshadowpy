@@ -46,27 +46,26 @@
 
     <div class="container-fluid" style="max-height: 920px;">
         <div class="d-flex flex-row" style="max-height: 920px;">
-            <div class="process-view d-flex flex-column overflow-auto" style="width: 15%; height: 57%;">
-                <!-- <img class="py-2" id="img-stream" src="{{ url_for('raw_feed') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;"> -->
-                <!-- <img class="py-2" id="img-stream" src="{{ url_for('imgand') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;"> -->
-                <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
-                <img class="py-2" id="img-stream" src="{{ url_for('imgsegentedcrop') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
 
-                <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
-                <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
-                <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
-                <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                    style="max-width: 100%; object-fit: contain;"> -->
-            </div>
-            <div class="d-flex flex-column" style="width: 65%; padding-left: 1%;">
+            <div class="d-flex flex-column" style="width: 80%; padding-left: 1%;">
                 <div class="row d-flex flex-row" style="height: 57%;">
+                    <div class="process-view d-flex flex-column overflow-auto" style="width: 15%; height: 100%;">
+                        <img class="py-2" id="img-stream" src="{{ url_for('raw_feed') }}" alt="test"
+                        style="max-width: 100%; object-fit: contain;">
+                        <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test"
+                            style="max-width: 100%; object-fit: contain;">
+                        <img class="py-2" id="img-stream" src="{{ url_for('imgsegentedcrop') }}" alt="test"
+                            style="max-width: 100%; object-fit: contain;">
+
+                        <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                            style="max-width: 100%; object-fit: contain;">
+                        <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                            style="max-width: 100%; object-fit: contain;">
+                        <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                            style="max-width: 100%; object-fit: contain;">
+                        <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                            style="max-width: 100%; object-fit: contain;"> -->
+                    </div>
                     <div class="row d-flex flex-row" style="width: 65%; max-height: 100%;">
                         <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                             style="height: 100%; object-fit: contain;">
@@ -93,7 +92,7 @@
                                 style="max-width: 100%; object-fit: contain;">
                         </div>
                         <div class="d-flex flex-row" style="width: 15%; max-height: 100%;">
-                            <img class="py-2" id="img-stream" src="{{ url_for('imgshadowonobj') }}" alt="test"
+                            <img class="py-2" id="img-stream" src="{{ url_for('imgshadow') }}" alt="test"
                                 style="max-width: 100%; object-fit: contain;">
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
@@ -120,8 +119,7 @@
                     <div class="d-flex flex-row" style="height: 80%;">
                         <div class="d-flex flex-row" style="width: 30%; max-height: 100%;">
                             <div class="d-flex flex-row" style="width: 33%; max-height: 100%;">
-                                <img class="py-2" id="img-stream" src="{{ url_for('imgshadow') }}" alt="test"
-                                style="max-width: 100%; object-fit: contain;">
+                                
                             </div>
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
@@ -366,9 +364,9 @@
             var JSON_received = JSON.parse(data);
             console.log(JSON_received);
             // if (chart_histShadowH instanceof Chart) {
-                chart_histShadowH.options.scales.y.max = JSON_received.hist_h_ymax
-                chart_histShadowH.data.datasets[0].data = JSON_received.hist_h[0];
-                chart_histShadowH.update();
+            chart_histShadowH.options.scales.y.max = JSON_received.hist_h_ymax
+            chart_histShadowH.data.datasets[0].data = JSON_received.hist_h[0];
+            chart_histShadowH.update();
             // }
             if (chart_histShadowS instanceof Chart) {
                 chart_histShadowS.options.scales.y.max = JSON_received.hist_s_ymax

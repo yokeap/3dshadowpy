@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 from engineio.payload import Payload
 
-Payload.max_decode_packets = 50
+Payload.max_decode_packets = 500
 
 app = Flask(__name__, template_folder='./view', static_folder='./view')
 socketio = SocketIO(app)
