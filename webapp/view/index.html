@@ -46,24 +46,24 @@
 
     <div class="container-fluid" style="max-height: 920px;">
         <div class="d-flex flex-row" style="max-height: 920px;">
-            <div class="process-view d-flex flex-column overflow-auto" style="width: 15%;">
+            <div class="process-view d-flex flex-column overflow-auto" style="width: 15%; height: 57%;">
                 <!-- <img class="py-2" id="img-stream" src="{{ url_for('raw_feed') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
-                <img class="py-2" id="img-stream" src="{{ url_for('imgand') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
+                    style="max-width: 100%; object-fit: contain;"> -->
+                <!-- <img class="py-2" id="img-stream" src="{{ url_for('imgand') }}" alt="test"
+                    style="max-width: 100%; object-fit: contain;"> -->
                 <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test"
                     style="max-width: 100%; object-fit: contain;">
                 <img class="py-2" id="img-stream" src="{{ url_for('imgsegentedcrop') }}" alt="test"
-                    style="max-width: 100%; object-fit: contain;"> -->
+                    style="max-width: 100%; object-fit: contain;">
 
-                <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                     style="max-width: 100%; object-fit: contain;">
                 <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                     style="max-width: 100%; object-fit: contain;">
                 <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                     style="max-width: 100%; object-fit: contain;">
                 <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                    style="max-width: 100%; object-fit: contain;">
+                    style="max-width: 100%; object-fit: contain;"> -->
             </div>
             <div class="d-flex flex-column" style="width: 65%; padding-left: 1%;">
                 <div class="row d-flex flex-row" style="height: 57%;">
@@ -88,21 +88,28 @@
                         <span class="text-white">Object Segmentation</span>
                     </div>
                     <div class="d-flex flex-row" style="height: 80%;">
-                        <div class="d-flex flex-row" style="width: 30%; max-height: 100%;">
-                            <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                                style="height: 100%; object-fit: contain;">
+                        <div class="d-flex flex-row" style="width: 15%; height: 100%;">
+                            <img class="py-2" id="img-stream" src="{{ url_for('imgroi') }}" alt="test"
+                                style="max-width: 100%; object-fit: contain;">
+                        </div>
+                        <div class="d-flex flex-row" style="width: 15%; max-height: 100%;">
+                            <img class="py-2" id="img-stream" src="{{ url_for('imgshadowonobj') }}" alt="test"
+                                style="max-width: 100%; object-fit: contain;">
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histObjH" style="width:50%;height:40%;"></canvas></div>
-                            <div class="slider-styled slider-round slider-hsv" id="slider-h-obj"></div>
+                            <div class="slider-styled slider-round slider-hsv" type="slider_hsv" id="slider-h-obj">
+                            </div>
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histObjS" style="width:50%;height:40%;"></canvas></div>
-                            <div class="slider-styled slider-round slider-hsv" id="slider-s-obj"></div>
+                            <div class="slider-styled slider-round slider-hsv" type="slider_hsv" id="slider-s-obj">
+                            </div>
                         </div>
                         <div class="d-flex flex-column" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histObjV" style="width:50%;height:40%;"></canvas></div>
-                            <div class="slider-styled slider-round slider-hsv" id="slider-v-obj"></div>
+                            <div class="slider-styled slider-round slider-hsv" type="slider_hsv" id="slider-v-obj">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -112,23 +119,28 @@
                     </div>
                     <div class="d-flex flex-row" style="height: 80%;">
                         <div class="d-flex flex-row" style="width: 30%; max-height: 100%;">
-                            <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                                style="height: 100%; object-fit: contain;">
+                            <div class="d-flex flex-row" style="width: 33%; max-height: 100%;">
+                                <img class="py-2" id="img-stream" src="{{ url_for('imgshadow') }}" alt="test"
+                                style="max-width: 100%; object-fit: contain;">
+                            </div>
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histShadowH" style="width:50%;height:40%;"></canvas>
                             </div>
-                            <div class="slider-styled slider-round slider-hsv" id="slider-h-shadow"></div>
+                            <div class="slider-styled slider-round slider-hsv" type="slider_hsv" id="slider-h-shadow">
+                            </div>
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histShadowS" style="width:50%;height:40%;"></canvas>
                             </div>
-                            <div class="slider-styled slider-round slider-hsv" id="slider-s-shadow"></div>
+                            <div class="slider-styled slider-round slider-hsv" type="slider_hsv" id="slider-s-shadow">
+                            </div>
                         </div>
                         <div class="d-flex flex-column" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histShadowV" style="width:50%;height:40%;"></canvas>
                             </div>
-                            <div class="slider-styled slider-round slider-hsv" id="slider-v-shadow"></div>
+                            <div class="slider-styled slider-round slider-hsv" type="slider_hsv" id="slider-v-shadow">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -231,6 +243,45 @@
         </div>
     </div>
     <script>
+        var subtractTreshVal = document.getElementById("subtractTreshVal"),
+            imgAndTreshVal = document.getElementById("imgAndTreshVal"),
+            medBlurVal = document.getElementById("medBlurVal"),
+            objShadowTreshVal = document.getElementById("objShadowTreshVal"),
+            subtractTreshValText = document.getElementById("subtractTreshValText"),
+            imgAndTreshValText = document.getElementById("imgAndTreshValText"),
+            medBlurValText = document.getElementById("medBlurValText"),
+            objShadowTreshValText = document.getElementById("objShadowTreshValText");
+
+        var objHsvData = {
+            "hue": {
+                "max": 0,
+                "min": 0
+            },
+            "saturation": {
+                "max": 0,
+                "min": 0
+            },
+            "value": {
+                "max": 0,
+                "min": 0
+            }
+        }
+
+        var shadowHsvData = {
+            "hue": {
+                "max": 0,
+                "min": 0
+            },
+            "saturation": {
+                "max": 0,
+                "min": 0
+            },
+            "value": {
+                "max": 0,
+                "min": 0
+            }
+        }
+
         function postjsonServ(value) {
             var req = new XMLHttpRequest();
             req.open('POST', "/requests", true);
@@ -252,6 +303,83 @@
         var socket = io();
         socket.on('connect', function () {
             socket.emit('socket-initilized', { data: 'I\'m connected!' });
+        });
+
+        socket.on('data-params', function (data) {
+            var data = JSON.parse(data)
+            updateSubtractTreshVal(data.subtractTreshVal);
+            updateImgAndBinTreshold(data.imgAndBinTreshVal);
+            updateMedBlurVal(data.medianBlur);
+            updateObjShadowTreshVal(data.objShadowTreshVal);
+        });
+
+        socket.on('data-obj-hsv', function (data) {
+            var data = JSON.parse(data)
+            document.querySelectorAll('[type=slider_hsv]').forEach(
+                slider_hsv => {
+                    switch (slider_hsv.id) {
+                        case "slider-h-obj":
+                            slider_hsv.noUiSlider.set([data.slider_h_obj.min, data.slider_h_obj.max]);
+                            break;
+                        case "slider-s-obj":
+                            slider_hsv.noUiSlider.set([data.slider_s_obj.min, data.slider_s_obj.max]);
+                            break;
+                        case "slider-v-obj":
+                            slider_hsv.noUiSlider.set([data.slider_v_obj.min, data.slider_v_obj.max]);
+                            break;
+                        case "slider-h-shadow":
+                            slider_hsv.noUiSlider.set([data.slider_h_shadow.min, data.slider_h_shadow.max]);
+                            break;
+                        case "slider-s-shadow":
+                            slider_hsv.noUiSlider.set([data.slider_s_shadow.min, data.slider_s_shadow.max]);
+                            break;
+                        case "slider-v-shadow":
+                            slider_hsv.noUiSlider.set([data.slider_v_shadow.min, data.slider_v_shadow.max]);
+                            break;
+                        default: ;
+                    }
+                }
+            );
+        });
+
+        socket.on('hsv-obj-data', function (data) {
+            var JSON_received = JSON.parse(data);
+            // console.log(JSON_received);
+            if (chart_histObjH instanceof Chart) {
+                chart_histObjH.options.scales.y.max = JSON_received.hist_h_ymax
+                chart_histObjH.data.datasets[0].data = JSON_received.hist_h[0];
+                chart_histObjH.update();
+            }
+            if (chart_histObjS instanceof Chart) {
+                chart_histObjS.options.scales.y.max = JSON_received.hist_s_ymax
+                chart_histObjS.data.datasets[0].data = JSON_received.hist_s[0];
+                chart_histObjS.update();
+            }
+            if (chart_histObjV instanceof Chart) {
+                chart_histObjV.options.scales.y.max = JSON_received.hist_v_ymax
+                chart_histObjV.data.datasets[0].data = JSON_received.hist_v[0];
+                chart_histObjV.update();
+            }
+        });
+
+        socket.on('hsv-shadow-data', function (data) {
+            var JSON_received = JSON.parse(data);
+            console.log(JSON_received);
+            // if (chart_histShadowH instanceof Chart) {
+                chart_histShadowH.options.scales.y.max = JSON_received.hist_h_ymax
+                chart_histShadowH.data.datasets[0].data = JSON_received.hist_h[0];
+                chart_histShadowH.update();
+            // }
+            if (chart_histShadowS instanceof Chart) {
+                chart_histShadowS.options.scales.y.max = JSON_received.hist_s_ymax
+                chart_histShadowS.data.datasets[0].data = JSON_received.hist_s[0];
+                chart_histShadowS.update();
+            }
+            if (chart_histShadowV instanceof Chart) {
+                chart_histShadowV.options.scales.y.max = JSON_received.hist_v_ymax
+                chart_histShadowV.data.datasets[0].data = JSON_received.hist_v[0];
+                chart_histShadowV.update();
+            }
         });
 
     </script>

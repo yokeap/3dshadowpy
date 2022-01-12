@@ -13,6 +13,9 @@ import json
 import time
 import pandas as pd
 import numpy as np
+from engineio.payload import Payload
+
+Payload.max_decode_packets = 50
 
 app = Flask(__name__, template_folder='./view', static_folder='./view')
 socketio = SocketIO(app)
@@ -93,9 +96,9 @@ def saveHandler():
     return render_template('camconfig.html')
 
 
-@app.route('/requests', methods=['POST', 'GET'])
-def recvHandler():
-    return render_template('index.html')   
+# @app.route('/requests')
+# def recvHandler():
+#     return render_template('index.html')   
 
 @app.route('/raw_feed')
 def raw_feed():
@@ -120,45 +123,44 @@ def imgmorph():
 def imgsegentedcrop():
     return Response(camera.segmented_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# @app.route('/imgroi')
-# def imgroi():
-#     return Response(camera.img)
+@app.route('/imgroi')
+def imgroi():
+    return Response(camera.roi_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# @app.route('/config_feed')
-# def config_feed():
-#     # return Response(camera.thread_process_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
-#     return Response(camera.gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+@app.route('/imgshadow')
+def imgshadow():
+    return Response(camera.shadow_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-
-# @app.route("/stream")
-# def stream():
-#     print("stream")
-#     result = {}
-#     def generate():
-#         # while True:
-#         # yield "{message: %s}" % ("success")
-#             # sleep(1)
-#         # for i in range(500):
-            
-#         #     sleep(1)
-#         result['message'] = "success"
-#         return json.dumps(result)
-
-
-#     return Response(generate(), mimetype="application/json")
-
-# @app.route("/stream", methods=['POST', 'GET'])
-# def stream():
-#     # jsonData = request.get_json()
-#     print("Stream")
-#     return Response(camera.hsv_feed(), mimetype="application/json")
+@app.route('/imgshadowonobj')
+def imgshadowonobj():
+    return Response(camera.shadow_on_obj_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @socketio.on('connect')
 def connect_event():
+    # send out config loaded to html
+    
     camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
     camera.imgAndBinTreshold =  config['imgAndBinTreshold']
     camera.medianBlur = config['medianBlur']
     print('socket has been connected')
+
+@socketio.on('message')
+def message_handle(message):
+    if message == "loaded":
+        jsonData = {}
+        jsonData['subtractTreshVal'] = config['imgDiffBinTreshold']
+        jsonData['imgAndBinTreshVal'] =  config['imgAndBinTreshold']
+        jsonData['medianBlur'] =  config['medianBlur']
+        jsonData['objShadowTreshVal'] =  config['objShadowTresholdVal']
+        socketio.emit('data-params', json.dumps(jsonData))
+        jsonData = {}
+        jsonData['slider_h_obj'] = config['obj']['hue']
+        jsonData['slider_s_obj'] = config['obj']['saturation']
+        jsonData['slider_v_obj'] = config['obj']['value']
+        jsonData['slider_h_shadow'] = config['shadowOnObj']['hue']
+        jsonData['slider_s_shadow'] = config['shadowOnObj']['saturation']
+        jsonData['slider_v_shadow'] = config['shadowOnObj']['value']
+        socketio.emit('data-obj-hsv', json.dumps(jsonData))
 
 @socketio.on('disconnect')
 def disconnect_event():
@@ -173,25 +175,45 @@ def fedd_status_handle(jsonData):
 @socketio.on('process-value')
 def process_value_handle(jsonData):
     pyObj = json.loads(jsonData)
-    camera.imgDiffBinTreshold = jsonData['subtractTreshVal']
-    camera.imgAndBinTreshold = jsonData['imgAndBinTreshold']
-    camera.medianBlur = jsonData['medianBlur']
-    print("main streaming has been changed to ", pyObj )
-
-
+    camera.imgDiffBinTreshold = int(pyObj['subtractTreshVal'])
+    camera.imgAndBinTreshold = int(pyObj['imgAndBinTreshold'])
+    camera.medianBlur = int(pyObj['medianBlur'])
+    config['imgDiffBinTreshold']
+    config['imgDiffBinTreshold']
+    config['medianBlur']
+    config['objShadowTresholdVal']
+    
 @socketio.on('slider-obj-hsv')
 def slider_obj_hsv_event(jsonData):
     pyObj = json.loads(jsonData)
-    # print('received json: ' + str(json))
-    # print(pyObj['objH'][0])
+    camera.objHue = pyObj["hue"]
+    camera.objSaturation = pyObj["saturation"]
+    camera.objValue = pyObj["value"]
+
+@socketio.on('slider-shadow-hsv')
+def slider_obj_hsv_event(jsonData):
+    pyObj = json.loads(jsonData)
+    camera.shadowHue = pyObj["hue"]
+    camera.shadowSaturation = pyObj["saturation"]
+    camera.shadowValue = pyObj["value"]
 
 @socketio.on('save-config')
 def save_config_handle(jsonData):
     pyObj = json.loads(jsonData)
     if pyObj['saveParams'] == True:
+        config['imgDiffBinTreshold'] = camera.imgDiffBinTreshold
+        config['imgAndBinTreshold'] = camera.imgAndBinTreshold 
+        config['medianBlur'] = camera.medianBlur
+        # config['objShadowTresholdVal']
+        config['obj']['hue'] = camera.objHue
+        config['obj']['saturation'] = camera.objSaturation
+        config['obj']['value'] = camera.objValue
+        config['shadowOnObj']['hue'] = camera.shadowHue
+        config['shadowOnObj']['saturation'] = camera.shadowSaturation
+        config['shadowOnObj']['value'] = camera.shadowValue
         print("all of config has been saved")
         with open('./config.json', 'w') as f:
-            json.dump(merge(config, jsonData), f)
+            json.dump(config, f)
 
 @socketio.on('capture')
 def capture_handle(jsonData):

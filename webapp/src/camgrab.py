@@ -41,9 +41,15 @@ class camgrab:
         self.setConfigDefault(config)
         self.imgBg = cv2.imread("./ref/background.jpg")
         self.feedStatus = "rawImage"
-        self.imgDiffBinTreshold = 240
-        self.imgAndBinTreshold = 50
-        self.medianBlur = 9
+        self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
+        self.imgAndBinTreshold = config['imgAndBinTreshold']
+        self.medianBlur = config['medianBlur']
+        self.objHue = config["obj"]["hue"]
+        self.objSaturation = config["obj"]["saturation"]
+        self.objValue = config["obj"]["value"]
+        self.shadowHue = config["shadowOnObj"]["hue"]
+        self.shadowSaturation = config["shadowOnObj"]["saturation"]
+        self.shadowValue = config["shadowOnObj"]["value"]
         self.socket = socket
 
         if not self.cap.isOpened():
@@ -58,10 +64,14 @@ class camgrab:
         self.queueImgAndFeed = queue.Queue()
         self.queueMorphFeed = queue.Queue()
         self.segmentSourceFeed = queue.Queue()
-        self.queueHSVFeed = queue.Queue()
+        self.queueROIFeed = queue.Queue()
+        self.queueShadow = queue.Queue()
+        self.queueShadowOnObjFeed = queue.Queue()
 
         self.threadGenFrames = Thread(target=self.gen_frames, args=(
-            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, self.queueMorphFeed, self.segmentSourceFeed, self.queueHSVFeed), daemon=True)
+            self.queueRawFeed, self.queueSubBackgroundFeed, self.queueImgAndFeed, 
+            self.queueMorphFeed, self.segmentSourceFeed, self.queueROIFeed, self.queueShadow,
+            self.queueShadowOnObjFeed), daemon=True)
         # self.threadRawFeed = Thread(target=self.thread_raw_feed)
 
     def setConfigDefault(self, config):
@@ -88,6 +98,11 @@ class camgrab:
         self.cap.set(cv2.CAP_PROP_SATURATION, config['saturation'])
         self.cap.set(cv2.CAP_PROP_SHARPNESS, config['sharpness'])
 
+    def setInitParams(self, config):
+        if not self.cap.isOpened():
+            raise IOError("Cannot open webcam")
+        
+
     def getConfig(self):
         loadConfig = {}
         if not self.cap.isOpened():
@@ -100,8 +115,7 @@ class camgrab:
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
         return loadConfig
 
-    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed, queueHSVFeed):
-        hsvJson = {}
+    def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed, queueROIFeed, queueShadow, queueShadowOnObjFeed):
         while True:
             if self.cap != 0:
                 success, frame = self.cap.read()
@@ -128,30 +142,62 @@ class camgrab:
                     imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(
                         frame, imgOpening)
                     segmentSourceFeed.put(imgSegmentSource)
-                    if len(imgROI) > 0:
-                        if len(imgROI[0]) > 0:
-                            imageHSV = cv2.cvtColor(imgROI[0], cv2.COLOR_BGR2HSV_FULL)
-                            h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
-                            # df=pd.DataFrame(h, columns=["x", "y"])
-                            h = np.transpose(cv2.calcHist([h],[0],None,[360],[0,360]))
-                            s = np.transpose(cv2.calcHist([s],[0],None,[256],[0,256]))
-                            v = np.transpose(cv2.calcHist([v],[0],None,[256],[0,256]))
-                            hsvJson['hist_h'] = h.tolist()
-                            hsvJson['hist_h_ymax'] = (np.mean(h) + 3 * np.std(h)).tolist()
-                            hsvJson['hist_s'] = s.tolist()
-                            hsvJson['hist_s_ymax'] = (np.mean(h) + 3 * np.std(h)).tolist()
-                            hsvJson['hist_v'] = v.tolist()
-                            hsvJson['hist_v_ymax'] = (np.mean(h) + 3 * np.std(h)).tolist()
-                            self.socket.emit('hsv-data', json.dumps(hsvJson))
+                    try:
+                        imgObj, imgObjColor = self.process_imgObjColor(imgROI[0])
+                        queueROIFeed.put(imgObjColor)
+                        imgShadow = segmentation.shadow(imgROI[0], imgObj)
+                        queueShadow.put(imgShadow)
+                        imgShadowOnObj = self.process_imgShadowOnObj(imgObjColor)
+                        queueShadowOnObjFeed.put(imgShadowOnObj)
+                    except:
+                        queueROIFeed.put(np.zeros_like(frame))
+                        queueShadow.put(np.zeros_like(frame))
+                        queueShadowOnObjFeed.put(np.zeros_like(frame))
+                        pass
                 else:
                     pass
             else:
                 pass
+
+    def process_imgObjColor(self, imgROI):
+        objJson = {}
+        imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+        h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+        h = np.transpose(cv2.calcHist([h],[0],None,[360],[0,360]))
+        s = np.transpose(cv2.calcHist([s],[0],None,[256],[0,256]))
+        v = np.transpose(cv2.calcHist([v],[0],None,[256],[0,256]))
+        objJson['hist_h'] = h.tolist()
+        objJson['hist_h_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        objJson['hist_s'] = s.tolist()
+        objJson['hist_s_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        objJson['hist_v'] = v.tolist()
+        objJson['hist_v_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        self.socket.emit('hsv-obj-data', json.dumps(objJson))
+        imgObj, imgObjColor = segmentation.obj(imgROI, imageHSV, self.objHue, self.objSaturation, self.objValue)
+        return imgObj, imgObjColor
+
+    def process_imgShadowOnObj(self, imgROI):
+        shadowJson = {}
+        imageHSV = imgROI
+        imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+        h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+        # df=pd.DataFrame(h, columns=["x", "y"])
+        h = np.transpose(cv2.calcHist([h],[0],None,[360],[0,360]))
+        s = np.transpose(cv2.calcHist([s],[0],None,[256],[0,256]))
+        v = np.transpose(cv2.calcHist([v],[0],None,[256],[0,256]))
+        shadowJson['hist_h'] = h.tolist()
+        shadowJson['hist_h_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        shadowJson['hist_s'] = s.tolist()
+        shadowJson['hist_s_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        shadowJson['hist_v'] = v.tolist()
+        shadowJson['hist_v_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        self.socket.emit('hsv-shadow-data', json.dumps(shadowJson))
+        imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, self.shadowHue, self.shadowSaturation, self.shadowValue)
+        return imgShadowOnObj 
    
     def raw_feed(self):
         # self.threadGenFrames.start()
         while True:
-            # self.threadGenFrames.join()
             frame = self.queueRawFeed.get()
             ret, buffer = cv2.imencode('.jpg', frame)
             yield (b'--frame\r\n'
@@ -197,19 +243,26 @@ class camgrab:
             yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-    # def hsv_feed(self):
-    #     hsvJson = {
-    #         "message": "test"
-    #     }
-    #     while True:
-    #         frame = self.queueHSVFeed.get()
-    #         h, s, v = frame [:,:,0], frame [:,:,1], frame [:,:,2]
-    #         # hsvJson["hue"] = h
-    #         # hsvJson["saturate"] = s 
-    #         # hsvJson["value"] = v
-    #         print(hsvJson)
-    #         return json.dumps(hsvJson)
-        
+    def roi_feed(self):
+        while True:
+            frame = self.queueROIFeed.get()
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    def shadow_feed(self):
+        while True:
+            frame = self.queueShadow.get()
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+    def shadow_on_obj_feed(self):
+        while True:
+            frame = self.queueShadowOnObjFeed.get()
+            ret, buffer = cv2.imencode('.jpg', frame)
+            yield (b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
     def shotSetting(self):
         if not self.cap.isOpened():
