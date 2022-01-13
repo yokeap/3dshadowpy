@@ -12,6 +12,8 @@
     <script src="./view/node_modules/socket.io/client-dist/socket.io.js"></script>
     <link rel="stylesheet" href="./view/node_modules/nouislider/dist/nouislider.min.css">
     <link rel="stylesheet" href="./view/static/css/main.css">
+    <script src="./view/node_modules/@arction/lcjs/dist/lcjs.iife.js"></script>
+    <script src="./view/node_modules/@arction/xydata/dist/xydata.iife.js"></script>
     <title>RayVol V.B01</title>
 </head>
 
@@ -67,8 +69,9 @@
                             style="max-width: 100%; object-fit: contain;"> -->
                     </div>
                     <div class="row d-flex flex-row" style="width: 65%; max-height: 100%;">
-                        <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                            style="height: 100%; object-fit: contain;">
+                        <!-- <img class="px-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                            style="height: 100%; object-fit: contain;"> -->
+                            <div id=3dChart></div>
                     </div>
 
                 </div>
@@ -119,7 +122,8 @@
                     <div class="d-flex flex-row" style="height: 80%;">
                         <div class="d-flex flex-row" style="width: 30%; max-height: 100%;">
                             <div class="d-flex flex-row" style="width: 33%; max-height: 100%;">
-                                
+                                <img class="py-2" id="img-stream" src="{{ url_for('imgshadowonobj') }}" alt="test"
+                                style="max-width: 100%; object-fit: contain;">
                             </div>
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
@@ -386,6 +390,7 @@
     <script src="./view/static/js/plot.js"></script>
     <script src="./view/static/js/script.js"></script>
     <script src="./view/static/js/slider.js"></script>
+    <script src="./view/static/js/3dplot.js"></script>
 </body>
 
 </html>

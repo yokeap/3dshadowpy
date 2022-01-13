@@ -6,6 +6,8 @@
   "author": "S.Siwakorn",
   "license": "MIT",
   "dependencies": {
+    "@arction/lcjs": "^3.3.3",
+    "@arction/xydata": "^1.4.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "bootstrap": "^5.1.3",
     "chart.js": "^3.6.2",

@@ -2,6 +2,25 @@
 # yarn lockfile v1
 
 
+"@arction/eventer@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@arction/eventer/-/eventer-1.0.1.tgz#1b11560cf056db03c82d48643f03f28c98379bb4"
+  integrity sha512-/443gMPcZwt+BSH5cy2/sJlYis2zT0IUbllboi/e0Ye4uk58SUloxjMecWjp2sJ7IBCGGpduaE8I73mMQmJGvw==
+
+"@arction/lcjs@^3.3.3":
+  version "3.3.3"
+  resolved "https://registry.yarnpkg.com/@arction/lcjs/-/lcjs-3.3.3.tgz#22fcf157e609459b42da4e084c8c21bffa5a996c"
+  integrity sha512-oiAm3rM7VWQA7dznhpDE0biYv3lEeZoBiBNw4sa24vjUK7ljQqrLN6AuFb4S4sWUd8jZjPHX8mSF4wn2ihf/Xg==
+  dependencies:
+    "@arction/eventer" "^1.0.1"
+    earcut "^2.2.2"
+    immutable "^4.0.0-rc.12"
+
+"@arction/xydata@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@arction/xydata/-/xydata-1.4.0.tgz#731d9b12c130872ac2938383fdd41e6fba546ecd"
+  integrity sha512-qHBoFhzGGRSdjcwOH8yO07b75svza301vNRyN1Un5YIb+HLraI1y9PR+uWojDgIrr7zy9DoTRo3cZxbAE7MrSQ==
+
 "@fortawesome/fontawesome-free@^5.15.4":
   version "5.15.4"
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.15.4.tgz#ecda5712b61ac852c760d8b3c79c96adca5554e5"
@@ -80,6 +99,11 @@ debug@~4.3.1:
   dependencies:
     ms "2.1.2"
 
+earcut@^2.2.2:
+  version "2.2.3"
+  resolved "https://registry.yarnpkg.com/earcut/-/earcut-2.2.3.tgz#d44ced2ff5a18859568e327dd9c7d46b16f55cf4"
+  integrity sha512-iRDI1QeCQIhMCZk48DRDMVgQSSBDmbzzNhnxIo+pwx3swkfjMh6vh0nWLq1NdvGHLKH6wIrAM3vQWeTj6qeoug==
+
 engine.io-parser@~4.0.0:
   version "4.0.3"
   resolved "https://registry.yarnpkg.com/engine.io-parser/-/engine.io-parser-4.0.3.tgz#83d3a17acfd4226f19e721bb22a1ee8f7662d2f6"
@@ -99,6 +123,11 @@ engine.io@~5.0.0:
     debug "~4.3.1"
     engine.io-parser "~4.0.0"
     ws "~7.4.2"
+
+immutable@^4.0.0-rc.12:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.0.0.tgz#b86f78de6adef3608395efb269a91462797e2c23"
+  integrity sha512-zIE9hX70qew5qTUjSS7wi1iwj/l7+m54KWU247nhM3v806UdGj1yDndXj+IOYxxtW9zyLI+xqFNZjTuDaLUqFw==
 
 mime-db@1.51.0:
   version "1.51.0"
