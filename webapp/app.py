@@ -164,6 +164,7 @@ def message_handle(message):
 
 @socketio.on('disconnect')
 def disconnect_event():
+    camera.threadGenFrames.stop()
     print('socket has been disconnected')
 
 @socketio.on('feed-status')
