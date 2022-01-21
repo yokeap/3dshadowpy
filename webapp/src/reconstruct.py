@@ -22,9 +22,9 @@ debug = True
 
 class reconstruct:
     def __init__(self, scale, config):
-        self.homographyMatrix = config["homographyMatrix"]
-        self.posVirlightIMG = config["virLightPosImg"]
-        self.posVirlightWorld = config["virLightPos"]
+        self.homographyMatrix = np.array(config["homographyMatrix"])
+        self.posVirlightIMG = np.array(config["virLightPosImg"]) * scale
+        self.posVirlightWorld = np.array(config["virLightPos"])
         self.ptCloudRaw = 4
         self.objVolume = 0
         # self.ptCloudMiddleLeft = np.array((height, 3))
@@ -315,6 +315,14 @@ class reconstruct:
             self.sliceSplineZ = np.concatenate(
                 (self.sliceSplineZ, self.sliceModel[:, 2, i]), axis=None)
 
+            # for using with lightning chart
+            # objJson = {
+            #     "x": self.sliceModel[:, 0, i],
+            #     "y": self.sliceModel[:, 1, i],
+            #     "z": self.sliceModel[:, 2, i],
+            # }
+
+            # self.objJson = np.concatenate(self.sliceModel[:, 0, i])
             # compute object volume by integrate computed areas (Riemann sum)
             if i > 0:
                 sumVolume = self.sliceModelArea[i, 1] * (
@@ -324,8 +332,8 @@ class reconstruct:
                 # sA = ((self.sliceModelArea[i, 1] + self.sliceModelArea[i-1, 1])/2) * (self.sliceModelArea[i, 0] - self.sliceModelArea[i-1, 0]) + (
                 #     self.sliceModelArea[0, 1]/2) * self.totalLength + (self.sliceModelArea[self.loop-1, 1]/2) * self.totalLength
                 # self.objVolume = self.objVolume + sA
-        print("x = ", self.halfSliceLower[:, 0, 50])
-        print("y = ", self.halfSliceLower[:, 1, 50])
+        print("x = ", self.halfSliceLower[:, 0, 10])
+        print("y = ", self.halfSliceLower[:, 1, 10])
         self.objVolume = round(self.objVolume / 1000, 2)
         print(self.objVolume)
         self.slicingObj = np.vstack(
@@ -346,6 +354,7 @@ class reconstruct:
             figSpline.scatter(
                 self.sliceSplineLower[:, 0, 0], self.sliceSplineLower[:, 1, 0], marker='o')
             figSpline.show()
+        return self.slicingObj, self.objVolume
 
     def imgChart_3d(self):
         imgObjEdgeUpper = np.array(self.edgeObjUpper)

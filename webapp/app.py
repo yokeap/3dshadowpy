@@ -15,7 +15,7 @@ import pandas as pd
 import numpy as np
 from engineio.payload import Payload
 
-Payload.max_decode_packets = 500
+Payload.max_decode_packets = 50
 
 app = Flask(__name__, template_folder='./view', static_folder='./view')
 socketio = SocketIO(app)
@@ -138,7 +138,7 @@ def imgshadowonobj():
 @socketio.on('connect')
 def connect_event():
     # send out config loaded to html
-    
+    camera.socketConnectStatus = False
     camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
     camera.imgAndBinTreshold =  config['imgAndBinTreshold']
     camera.medianBlur = config['medianBlur']
@@ -147,6 +147,8 @@ def connect_event():
 @socketio.on('message')
 def message_handle(message):
     if message == "loaded":
+        print('html dom has been successfully loaded')
+        camera.socketConnectStatus = True
         jsonData = {}
         jsonData['subtractTreshVal'] = config['imgDiffBinTreshold']
         jsonData['imgAndBinTreshVal'] =  config['imgAndBinTreshold']
@@ -161,10 +163,11 @@ def message_handle(message):
         jsonData['slider_s_shadow'] = config['shadowOnObj']['saturation']
         jsonData['slider_v_shadow'] = config['shadowOnObj']['value']
         socketio.emit('data-obj-hsv', json.dumps(jsonData))
-
+        
 @socketio.on('disconnect')
 def disconnect_event():
     camera.threadGenFrames.stop()
+    camera.socketConnectStatus = False
     print('socket has been disconnected')
 
 @socketio.on('feed-status')
@@ -215,12 +218,16 @@ def save_config_handle(jsonData):
         print("all of config has been saved")
         with open('./config.json', 'w') as f:
             json.dump(config, f)
+    else:
+        print("save-config channel has not key:", pyObj)
 
 @socketio.on('capture')
 def capture_handle(jsonData):
     pyObj = json.loads(jsonData)
     if pyObj['capture'] == True:
         camera.captureAll()           #capture pic to directory
+    else:
+        print("capture channel has not key:", pyObj)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

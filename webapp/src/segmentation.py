@@ -33,12 +33,14 @@ def objShadow(imgSource, imgOpening):
     boudingRect = []
     imgArrayROI = []
 
-    imgMaskRGB = np.zeros_like(imgSource)
+    imgInput = imgSource
+
+    imgMaskRGB = np.zeros_like(imgInput)
     imgMaskRGB[:, :, 0] = imgOpening
     imgMaskRGB[:, :, 1] = imgOpening
     imgMaskRGB[:, :, 2] = imgOpening
 
-    imgSegmentBlackColor = cv2.bitwise_and(imgSource, imgMaskRGB)
+    imgSegmentBlackColor = cv2.bitwise_and(imgInput, imgMaskRGB)
 
     contours, hierarchy = cv2.findContours(
         imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -50,10 +52,10 @@ def objShadow(imgSource, imgOpening):
         Height = h + margin
         # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
         boudingRect.append([OriginX, OriginY, Width, Height])
-        cv2.rectangle(imgSource, (OriginX, OriginY), (x + Width, y + Height), (255, 255, 255), 2)
+        cv2.rectangle(imgInput, (OriginX, OriginY), (x + Width, y + Height), (255, 255, 255), 2)
         imgArrayROI.append(imgSegmentBlackColor[OriginY:OriginY + Height, OriginX:OriginX + Width])  
     
-    return imgSource, imgSegmentBlackColor, imgArrayROI, boudingRect
+    return imgInput, imgSegmentBlackColor, imgArrayROI, boudingRect
 
 def obj(imgROI, imgHSV, hue, saturation, value):
     # Define thresholds for channel 1 based on histogram settings
@@ -78,7 +80,7 @@ def obj(imgROI, imgHSV, hue, saturation, value):
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
-        cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+    cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
     # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
     # masking process for image object with black backgroubd color
     imgMask = np.zeros_like(imgROI)
@@ -226,7 +228,7 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
-        cv2.drawContours(imgShadowOnObj, big_contour, 0, 255, -1)
+    cv2.drawContours(imgShadowOnObj, big_contour, 0, 255, -1)
     # imgShadowOnObj = cv2.erode(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
     # imgShadowOnObj = cv2.dilate(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
     imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)

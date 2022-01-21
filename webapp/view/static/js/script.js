@@ -118,7 +118,7 @@ radios.forEach(
 );
 
 function saveCapture(){
-    socket.emit('save-config', JSON.stringify({ capture : true }))
+    socket.emit('capture', JSON.stringify({ capture : true }))
 }
 
 function saveParams(){

@@ -38,6 +38,9 @@ from . import reconstruct
 class camgrab:
 
     def __init__(self, config, socket):
+        # self.objReconstruct = reconstruct.reconstruct(1.0, config)
+        # for test with fish
+        self.objReconstruct = reconstruct.reconstruct(0.2, config)
         self.cap = cv2.VideoCapture(0)
         self.setConfigDefault(config)
         self.imgBg = cv2.imread("./ref/background.jpg")
@@ -52,6 +55,7 @@ class camgrab:
         self.shadowSaturation = config["shadowOnObj"]["saturation"]
         self.shadowValue = config["shadowOnObj"]["value"]
         self.socket = socket
+        self.socketConnectStatus = False
 
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
@@ -117,40 +121,69 @@ class camgrab:
         return loadConfig
 
     def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed, queueROIFeed, queueShadow, queueShadowOnObjFeed):
+        end = 0
         while True:
             if self.cap != 0:
                 success, frame = self.cap.read()
                 self.success = success
-                if success:
+                if success == True and self.socketConnectStatus == True:
+                    # for test with fish
+                    # self.imgBg = cv2.imread('../sample-image/bg-1.JPG')
+                    # frame = cv2.imread('../sample-image/fish-1.JPG')
+                    # height, width, channels = frame.shape
+                    # height = int(height * 0.2)
+                    # width = int(width * 0.2)
+                    # self.imgBg = cv2.resize(self.imgBg, (width, height))
+                    # frame = cv2.resize(frame, (width, height))
+
                     # print("Fire")
+                    # start timer
+                    start = time.time()
                     self.success = False
+                    self.rawframe = frame.copy()
                     queueRawFeed.put(frame)
-                    diffImage = cv2.cvtColor(
+                    self.diffImage = cv2.cvtColor(
                         frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
-                    ret, imgDiffBin = cv2.threshold(
-                        diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
-                    queueSubBackground.put(diffImage)
-                    imgAnd = cv2.bitwise_and(
-                        imgDiffBin, diffImage)
-                    ret, imgBin = cv2.threshold(
-                        imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
-                    queueImgAndFeed.put(imgBin)
-                    imgOpening = cv2.morphologyEx(
-                        imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-                    imgOpening = cv2.medianBlur(
-                        imgOpening, self.medianBlur)
-                    queueMorphFeed.put(imgOpening)
-                    imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(
-                        frame, imgOpening)
-                    segmentSourceFeed.put(imgSegmentSource)
+                    ret, self.imgDiffBin = cv2.threshold(
+                        self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
+                    queueSubBackground.put(self.diffImage)
+                    self.imgAnd = cv2.bitwise_and(
+                        self.imgDiffBin, self.diffImage)
+                    ret, self.imgBin = cv2.threshold(
+                        self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
+                    queueImgAndFeed.put(self.imgBin)
+                    self.imgOpening = cv2.morphologyEx(
+                        self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+                    self.imgOpening = cv2.medianBlur(
+                        self.imgOpening, self.medianBlur)
+                    queueMorphFeed.put(self.imgOpening)
+                    self.imgSegmentSource, self.imgSegmentBlack, self.imgROI, self.posCrop = segmentation.objShadow(
+                        frame, self.imgOpening)
+                    segmentSourceFeed.put(self.imgSegmentSource)
                     try:
-                        imgObj, imgObjColor = self.process_imgObjColor(imgROI[0])
-                        queueROIFeed.put(imgObjColor)
-                        imgShadow = segmentation.shadow(imgROI[0], imgObj)
-                        queueShadow.put(imgShadow)
-                        imgShadowOnObj = self.process_imgShadowOnObj(imgObjColor)
-                        queueShadowOnObjFeed.put(imgShadowOnObj)
-                    except:
+                        self.imgObj, self.imgObjColor = self.process_imgObjColor(self.imgROI[0])
+                        queueROIFeed.put(self.imgObjColor)
+                        self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
+                        queueShadow.put(self.imgShadow)
+                        self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
+                        queueShadowOnObjFeed.put(self.imgShadowOnObj)
+                        self.objReconstruct.reconstruct(frame, self.imgObj, self.imgShadowOnObj, self.imgShadow, self.posCrop )
+                        ptCloud, volume = self.objReconstruct.reconstructVolume(0.05)
+                        end = time.time()
+                        print("processed time = ", (end - start), "s")
+                        if self.socketConnectStatus == True:
+                            objJson = {
+                                "ptCloud" : {
+                                    "x": ptCloud[:, 0].tolist(),
+                                    "y": ptCloud[:, 1].tolist(),
+                                    "z": ptCloud[:, 2].tolist(),
+                                },
+                                "volume": volume
+                            }
+                            self.socket.emit('3d-data', json.dumps(objJson))
+                            # self.objReconstruct.volumeChart(end - start)
+                    except Exception as e:
+                        print(e)
                         queueROIFeed.put(np.zeros_like(frame))
                         queueShadow.put(np.zeros_like(frame))
                         queueShadowOnObjFeed.put(np.zeros_like(frame))
@@ -173,13 +206,13 @@ class camgrab:
         objJson['hist_s_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
         objJson['hist_v'] = v.tolist()
         objJson['hist_v_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
-        self.socket.emit('hsv-obj-data', json.dumps(objJson))
+        if self.socketConnectStatus == True:
+            self.socket.emit('hsv-obj-data', json.dumps(objJson))
         imgObj, imgObjColor = segmentation.obj(imgROI, imageHSV, self.objHue, self.objSaturation, self.objValue)
         return imgObj, imgObjColor
 
     def process_imgShadowOnObj(self, imgROI):
         shadowJson = {}
-        imageHSV = imgROI
         imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
         h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
         # df=pd.DataFrame(h, columns=["x", "y"])
@@ -192,7 +225,8 @@ class camgrab:
         shadowJson['hist_s_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
         shadowJson['hist_v'] = v.tolist()
         shadowJson['hist_v_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
-        self.socket.emit('hsv-shadow-data', json.dumps(shadowJson))
+        if self.socketConnectStatus == True:
+            self.socket.emit('hsv-shadow-data', json.dumps(shadowJson))
         imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, self.shadowHue, self.shadowSaturation, self.shadowValue)
         return imgShadowOnObj 
    
@@ -285,12 +319,20 @@ class camgrab:
             pass
         # p = os.path.join(['./capture/', "{}".format(str(now).replace(":",''))])
         print(p)
-        cv2.imwrite(os.path.join(p, "imgraw.jpg"), self.frame)
+        cv2.imwrite(os.path.join(p, "imgraw.jpg"), self.rawframe)
         cv2.imwrite(os.path.join(p, "imgdiff.jpg"), self.diffImage)
         cv2.imwrite(os.path.join(p, "imgAnd.jpg"), self.imgAnd)
         cv2.imwrite(os.path.join(p, "imgBin.jpg"), self.imgBin)
         cv2.imwrite(os.path.join(p, "imgopening.jpg"), self.imgOpening)
-        cv2.imwrite(os.path.join(p, "imgsegment.jpg"), self.imgSegmentBin)
+        cv2.imwrite(os.path.join(p, "imgsegment.jpg"), self.imgSegmentBlack)
+        try:
+            cv2.imwrite(os.path.join(p, "imgroi.jpg"), self.imgROI[0])
+            cv2.imwrite(os.path.join(p, "imgObjColor.jpg"), self.imgObjColor)
+            cv2.imwrite(os.path.join(p, "imgShadow.jpg"), self.imgShadow)
+            cv2.imwrite(os.path.join(p, "imgShadowOnObj.jpg"), self.imgShadowOnObj)
+        except:
+
+            pass
 
     def camRelease(self):
         self.cap.release()

@@ -15,6 +15,12 @@
     <script src="./view/node_modules/@arction/lcjs/dist/lcjs.iife.js"></script>
     <script src="./view/node_modules/@arction/xydata/dist/xydata.iife.js"></script>
     <title>RayVol V.B01</title>
+    <script>
+        var socket = io();
+        socket.on('connect', function () {
+            socket.emit('socket-initilized', { data: 'I\'m connected!' });
+        });
+    </script>
 </head>
 
 <header>
@@ -54,8 +60,8 @@
                     <div class="process-view d-flex flex-column overflow-auto" style="width: 15%; height: 100%;">
                         <img class="py-2" id="img-stream" src="{{ url_for('raw_feed') }}" alt="test"
                         style="max-width: 100%; object-fit: contain;">
-                        <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test"
-                            style="max-width: 100%; object-fit: contain;">
+                        <!-- <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test"
+                            style="max-width: 100%; object-fit: contain;"> -->
                         <img class="py-2" id="img-stream" src="{{ url_for('imgsegentedcrop') }}" alt="test"
                             style="max-width: 100%; object-fit: contain;">
 
@@ -302,11 +308,6 @@
 
         // console.log(xmr)
 
-        var socket = io();
-        socket.on('connect', function () {
-            socket.emit('socket-initilized', { data: 'I\'m connected!' });
-        });
-
         socket.on('data-params', function (data) {
             var data = JSON.parse(data)
             updateSubtractTreshVal(data.subtractTreshVal);
@@ -348,17 +349,17 @@
             var JSON_received = JSON.parse(data);
             // console.log(JSON_received);
             if (chart_histObjH instanceof Chart) {
-                chart_histObjH.options.scales.y.max = JSON_received.hist_h_ymax
+                chart_histObjH.options.scales.y.max = JSON_received.hist_h_ymax;
                 chart_histObjH.data.datasets[0].data = JSON_received.hist_h[0];
                 chart_histObjH.update();
             }
             if (chart_histObjS instanceof Chart) {
-                chart_histObjS.options.scales.y.max = JSON_received.hist_s_ymax
+                chart_histObjS.options.scales.y.max = JSON_received.hist_s_ymax;
                 chart_histObjS.data.datasets[0].data = JSON_received.hist_s[0];
                 chart_histObjS.update();
             }
             if (chart_histObjV instanceof Chart) {
-                chart_histObjV.options.scales.y.max = JSON_received.hist_v_ymax
+                chart_histObjV.options.scales.y.max = JSON_received.hist_v_ymax;
                 chart_histObjV.data.datasets[0].data = JSON_received.hist_v[0];
                 chart_histObjV.update();
             }
@@ -366,19 +367,19 @@
 
         socket.on('hsv-shadow-data', function (data) {
             var JSON_received = JSON.parse(data);
-            console.log(JSON_received);
-            // if (chart_histShadowH instanceof Chart) {
-            chart_histShadowH.options.scales.y.max = JSON_received.hist_h_ymax
-            chart_histShadowH.data.datasets[0].data = JSON_received.hist_h[0];
-            chart_histShadowH.update();
-            // }
+            // console.log(JSON_received);
+            if (chart_histShadowH instanceof Chart) {
+                chart_histShadowH.options.scales.y.max = JSON_received.hist_h_ymax;
+                chart_histShadowH.data.datasets[0].data = JSON_received.hist_h[0];
+                chart_histShadowH.update();
+            }
             if (chart_histShadowS instanceof Chart) {
-                chart_histShadowS.options.scales.y.max = JSON_received.hist_s_ymax
+                chart_histShadowS.options.scales.y.max = JSON_received.hist_s_ymax;
                 chart_histShadowS.data.datasets[0].data = JSON_received.hist_s[0];
                 chart_histShadowS.update();
             }
             if (chart_histShadowV instanceof Chart) {
-                chart_histShadowV.options.scales.y.max = JSON_received.hist_v_ymax
+                chart_histShadowV.options.scales.y.max = JSON_received.hist_v_ymax;
                 chart_histShadowV.data.datasets[0].data = JSON_received.hist_v[0];
                 chart_histShadowV.update();
             }
