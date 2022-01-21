@@ -332,10 +332,10 @@ class reconstruct:
                 # sA = ((self.sliceModelArea[i, 1] + self.sliceModelArea[i-1, 1])/2) * (self.sliceModelArea[i, 0] - self.sliceModelArea[i-1, 0]) + (
                 #     self.sliceModelArea[0, 1]/2) * self.totalLength + (self.sliceModelArea[self.loop-1, 1]/2) * self.totalLength
                 # self.objVolume = self.objVolume + sA
-        print("x = ", self.halfSliceLower[:, 0, 10])
-        print("y = ", self.halfSliceLower[:, 1, 10])
+        # print("x = ", self.halfSliceLower[:, 0, 10])
+        # print("y = ", self.halfSliceLower[:, 1, 10])
         self.objVolume = round(self.objVolume / 1000, 2)
-        print(self.objVolume)
+        # print(self.objVolume)
         self.slicingObj = np.vstack(
             [self.sliceSplineX, self.sliceSplineY, self.sliceSplineZ]).T
 

@@ -36,7 +36,7 @@ const chart3D = lightningChart().Chart3D({
     disableAnimations: true,
     container: '3dChart'
     // theme: Themes.darkGold
-}).setTitle('3D Scatter Chart')
+}).setBoundingBox({ x: 1.0, y: 0.5, z: 1.0}).setTitle('3D Scatter Chart')
 
 // Set Axis titles
 chart3D.getDefaultAxisX().setTitle('Axis X');
@@ -46,7 +46,7 @@ chart3D.getDefaultAxisZ().setTitle('Axis Z');
 const pointSeries3D = chart3D.addPointSeries()
     .setPointStyle(new PointStyle3D.Triangulated({
         fillStyle: new SolidFill({ color: ColorRGBA(224, 152, 0) }),
-        size: 10,
+        size: 5,
         shape: 'sphere'
     }))
     .setName('3d-data')

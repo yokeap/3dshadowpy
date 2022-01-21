@@ -138,7 +138,7 @@ def imgshadowonobj():
 @socketio.on('connect')
 def connect_event():
     # send out config loaded to html
-    camera.socketConnectStatus = False
+    camera.socketConnectStatus = True
     camera.imgDiffBinTreshold = config['imgDiffBinTreshold']
     camera.imgAndBinTreshold =  config['imgAndBinTreshold']
     camera.medianBlur = config['medianBlur']
@@ -166,7 +166,7 @@ def message_handle(message):
         
 @socketio.on('disconnect')
 def disconnect_event():
-    camera.threadGenFrames.stop()
+    # camera.threadGenFrames.stop()
     camera.socketConnectStatus = False
     print('socket has been disconnected')
 

@@ -52,8 +52,8 @@
 
 <body>
 
-    <div class="container-fluid" style="max-height: 920px;">
-        <div class="d-flex flex-row" style="max-height: 920px;">
+    <div class="container-fluid" style="height: 920px;">
+        <div class="d-flex flex-row" style="height: 920px;">
 
             <div class="d-flex flex-column" style="width: 80%; padding-left: 1%;">
                 <div class="row d-flex flex-row" style="height: 57%;">
@@ -259,6 +259,13 @@
             imgAndTreshValText = document.getElementById("imgAndTreshValText"),
             medBlurValText = document.getElementById("medBlurValText"),
             objShadowTreshValText = document.getElementById("objShadowTreshValText");
+
+        var objProcessData = {
+            "subtractTreshVal": parseInt(subtractTreshVal.value),
+            "imgAndTreshVal": parseInt(imgAndTreshVal.value),
+            "medBlurVal": parseInt(medBlurVal.value),
+            "objShadowTreshVal": parseInt(objShadowTreshVal.value)
+        }
 
         var objHsvData = {
             "hue": {

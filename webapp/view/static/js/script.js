@@ -8,12 +8,12 @@
 // };
 
 
-jsonData = {
-    subtractTreshVal: parseInt(subtractTreshVal.value),
-    imgAndBinTreshold: parseInt(imgAndTreshVal.value),
-    medianBlur: parseInt(medBlurVal.value),
-    objShadowTreshVal: parseInt(objShadowTreshVal.value)
-}
+// jsonData = {
+//     subtractTreshVal: parseInt(subtractTreshVal.value),
+//     imgAndBinTreshold: parseInt(imgAndTreshVal.value),
+//     medianBlur: parseInt(medBlurVal.value),
+//     objShadowTreshVal: parseInt(objShadowTreshVal.value)
+// }
 
 // // Background Subtract Threshold
 // subTreshVal.oninput = function () {
@@ -58,23 +58,23 @@ ranges.forEach(
             // console.log(range.id);
             if(range.id === "subtractTreshVal"){
                 subtractTreshValText.value = range.value;
-                jsonData.subtractTreshVal = parseInt(range.value);
-                socket.emit('process-value', JSON.stringify(jsonData))
+                objProcessData.subtractTreshVal = parseInt(range.value);
+                socket.emit('process-value', JSON.stringify(objProcessData))
             }
             else if (range.id === "imgAndTreshVal"){
                 imgAndTreshValText.value = range.value;
-                jsonData.imgAndBinTreshold =parseInt(range.value);
-                socket.emit('process-value', JSON.stringify(jsonData))
+                objProcessData.imgAndBinTreshold =parseInt(range.value);
+                socket.emit('process-value', JSON.stringify(objProcessData))
             }
             else if (range.id === "medBlurVal"){
                 medBlurValText.value = range.value;
-                jsonData.medBlurVal = parseInt(range.value);
-                socket.emit('process-value', JSON.stringify(jsonData))
+                objProcessData.medBlurVal = parseInt(range.value);
+                socket.emit('process-value', JSON.stringify(objProcessData))
             }
             else if (range.id === "objShadowTreshVal"){
                 objShadowTreshValText.value = range.value;
-                jsonData.objShadowTreshVal = parseInt(range.value);
-                socket.emit('process-value', JSON.stringify(jsonData))
+                objProcessData.objShadowTreshVal = parseInt(range.value);
+                socket.emit('process-value', JSON.stringify(objProcessData))
             }
             
         }
