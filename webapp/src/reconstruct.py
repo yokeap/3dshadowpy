@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 plot.style.use('seaborn-darkgrid')
 
-debug = True
+debug = False
 
 # Reconstruct 3D of Object from shadow,
 # height of object is calculated from range of shadow,

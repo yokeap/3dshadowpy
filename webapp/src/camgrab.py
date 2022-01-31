@@ -126,7 +126,7 @@ class camgrab:
             if self.cap != 0:
                 success, frame = self.cap.read()
                 self.success = success
-                if success == True and self.socketConnectStatus == True:
+                if success == True and self.socketConnectStatus == True and self.feedStatus != "freeze":
                     # for test with fish
                     # self.imgBg = cv2.imread('../sample-image/bg-1.JPG')
                     # frame = cv2.imread('../sample-image/fish-1.JPG')

@@ -113,6 +113,14 @@ var radios = document.querySelectorAll('input[type=radio]');
 radios.forEach(
     radio => radio.addEventListener('change', () => {
             socket.emit('feed-status', JSON.stringify({ feedStatus : radio.value }))
+            // switch (radio.id) {
+            //     case "btnFreeze":
+                        
+            //         break;
+            
+            //     default:
+            //         break;
+            // }
         }
     )
 );
