@@ -56,6 +56,7 @@ class camgrab:
         self.shadowValue = config["shadowOnObj"]["value"]
         self.socket = socket
         self.socketConnectStatus = False
+        self.objJson = {}
 
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
@@ -172,7 +173,7 @@ class camgrab:
                         end = time.time()
                         print("processed time = ", (end - start), "s")
                         if self.socketConnectStatus == True:
-                            objJson = {
+                            self.objJson = {
                                 "ptCloud" : {
                                     "x": ptCloud[:, 0].tolist(),
                                     "y": ptCloud[:, 1].tolist(),
@@ -180,7 +181,7 @@ class camgrab:
                                 },
                                 "volume": volume
                             }
-                            self.socket.emit('3d-data', json.dumps(objJson))
+                            self.socket.emit('3d-data', json.dumps(self.objJson))
                             # self.objReconstruct.volumeChart(end - start)
                     except Exception as e:
                         print(e)
@@ -330,6 +331,8 @@ class camgrab:
             cv2.imwrite(os.path.join(p, "imgObjColor.jpg"), self.imgObjColor)
             cv2.imwrite(os.path.join(p, "imgShadow.jpg"), self.imgShadow)
             cv2.imwrite(os.path.join(p, "imgShadowOnObj.jpg"), self.imgShadowOnObj)
+            with open(os.path.join(p, "reconstruct.json"), 'w') as f:
+                json.dump(self.objJson, f)
         except:
 
             pass
