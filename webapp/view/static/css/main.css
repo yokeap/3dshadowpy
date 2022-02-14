@@ -55,3 +55,14 @@ body {
   margin-left: 6%;
   width: 70%;
 }
+
+.process-data {
+  margin-bottom: 5%;
+}
+
+
+.process-data-value {
+  display: flex;
+  justify-content: flex-end;
+}
+

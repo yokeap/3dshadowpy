@@ -57,19 +57,21 @@
 
             <div class="d-flex flex-column" style="width: 80%; padding-left: 1%;">
                 <div class="row d-flex flex-row" style="height: 57%;">
-                    <div class="process-view d-flex flex-column overflow-auto" style="width: 15%; height: 100%;">
+                    <div class="process-view d-flex flex-column overflow-auto" style="width: 25%; height: 100%;">
                         <img class="py-2" id="img-stream" src="{{ url_for('raw_feed') }}" alt="test"
                         style="max-width: 100%; object-fit: contain;">
+
                         <!-- <img class="py-2" id="img-stream" src="{{ url_for('imgmorph') }}" alt="test"
                             style="max-width: 100%; object-fit: contain;"> -->
+
                         <img class="py-2" id="img-stream" src="{{ url_for('imgsegentedcrop') }}" alt="test"
                             style="max-width: 100%; object-fit: contain;">
 
                         <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                             style="max-width: 100%; object-fit: contain;">
                         <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
-                            style="max-width: 100%; object-fit: contain;">
-                        <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                            style="max-width: 100%; object-fit: contain;"> -->
+                        <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                             style="max-width: 100%; object-fit: contain;">
                         <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
                             style="max-width: 100%; object-fit: contain;"> -->
@@ -99,10 +101,16 @@
                         <div class="d-flex flex-row" style="width: 15%; height: 100%;">
                             <img class="py-2" id="img-stream" src="{{ url_for('imgroi') }}" alt="test"
                                 style="max-width: 100%; object-fit: contain;">
+
+                                <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                                style="max-width: 100%; object-fit: contain;"> -->
                         </div>
                         <div class="d-flex flex-row" style="width: 15%; max-height: 100%;">
                             <img class="py-2" id="img-stream" src="{{ url_for('imgshadow') }}" alt="test"
                                 style="max-width: 100%; object-fit: contain;">
+
+                                <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                                style="max-width: 100%; object-fit: contain;"> -->
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
                             <div style="width: 80%;"><canvas id="histObjH" style="width:50%;height:40%;"></canvas></div>
@@ -130,6 +138,9 @@
                             <div class="d-flex flex-row" style="width: 33%; max-height: 100%;">
                                 <img class="py-2" id="img-stream" src="{{ url_for('imgshadowonobj') }}" alt="test"
                                 style="max-width: 100%; object-fit: contain;">
+
+                                <!-- <img class="py-2" id="img-stream" src="./view/static/img/mock.jpg" alt="test"
+                                style="max-width: 100%; object-fit: contain;"> -->
                             </div>
                         </div>
                         <div class="d-flex flex-column mx-2 border-end border-2 border-warning" style="width: 30%;">
@@ -154,31 +165,76 @@
                 </div>
             </div>
             <div class="d-flex flex-column border-start border-3 border-warning"
-                style="width: 15%; padding-left: 1%; padding-right: 0;">
-                <div class="btn-group-vertical pt-4" role="group" name="radioGroup"
-                    aria-label="Basic radio toggle button group">
+                style="width: 20%; padding-left: 1%; padding-right: 0;">
 
-                    <input class="btn-check" type="radio" name="btnradio" value="2dImage" id="swt2dImage"
-                        autocomplete="off" checked>
-                    <label class="btn btn-outline-primary text-white" for="swt2dImage">2D Image</label>
+                <div class="row border-bottom pt-4" style="height: 30%;">
 
-                    <input class="btn-check" type="radio" name="btnradio" value="3dReconstuction"
-                        id="swt3dReconstruction" autocomplete="off">
-                    <label class="btn btn-outline-primary text-white" for="swt3dReconstruction">3D
-                        Reconstruction</label>
+                    <div class="col-7 d-flex flex-column">
+                        <h5 class="text-white process-data">Computation Time :</h5>
+                        <h5 class="text-white process-data">Total Point Cloud :</h5>
+                        <h5 class="text-white process-data">Volume :</h5>
+                        <h5 class="text-white process-data">Length :</h5>
+                        <h5 class="text-white process-data">Width :</h5>
+                        <h5 class="text-white process-data">Height :</h5>
+                    </div>
 
-                    <input class="btn-check" type="radio" name="btnradio" value="sliceImage" id="swtSliceImage"
-                        autocomplete="off">
-                    <label class="btn btn-outline-primary text-white" for="swtSliceImage">Slice Image</label>
+                    <div class="col-3 d-flex flex-column process-data">
+                        <h5 class="text-white process-data-value" id="computeTime">0.000</h5>
+                        <h5 class="text-white process-data-value" id="totalPointCloud">0000</h5>
+                        <h5 class="text-white process-data-value" id="volume">00.00</h5>
+                        <h5 class="text-white process-data-value" id="length">000</h5>
+                        <h5 class="text-white process-data-value" id="width">000</h5>
+                        <h5 class="text-white process-data-value" id="height">000</h5>
+                    </div>
 
-                    <input class="btn-check" type="radio" name="btnradio" value="rayTracing" id="swtRayTracing"
-                        autocomplete="off">
-                    <label class="btn btn-outline-primary text-white" for="swtRayTracing">Ray Tracing</label>
-
-                    <input class="btn-check" type="radio" name="btnradio" value="freeze" id="btnFreeze"
-                        autocomplete="off">
-                    <label class="btn btn-outline-primary text-white" for="btnFreeze">Freeze</label>
+                    <div class="col-2 d-flex flex-column process-data">
+                        <h5 class="text-white process-data-unit">s</h5>
+                        <h5 class="text-white process-data-unit">p</h5>
+                        <h5 class="text-white process-data-unit">cm<sup>3</sup></h5>
+                        <h5 class="text-white process-data-unit">mm</h5>
+                        <h5 class="text-white process-data-unit">mm</h5>
+                        <h5 class="text-white process-data-unit">mm</h5>
+                    </div>
+                    
+                    <!-- <div class="d-flex flex-column" style="width: 100%;">
+                        <div class="d-flex flex-row justify-content-between process-data">
+                            <h5 class="text-white ">Computation Time:</h5>
+                            <h5 class="text-white process-data-value" id="computeTime">0.000</h5>
+                            <h5 class="text-white process-data-unit">s</h5>
+                        </div>
+                        
+                        
+                    </div> -->
                 </div>
+
+                <div class="row d-flex justify-content-center">
+                    <div class="btn-group-vertical pt-4" role="group" name="radioGroup"
+                        aria-label="Basic radio toggle button group" style="width: 60%;">
+
+                        <input class="btn-check" type="radio" name="btnradio" value="2dImage" id="swt2dImage"
+                            autocomplete="off" checked>
+                        <label class="btn btn-outline-primary text-white" for="swt2dImage">2D Image</label>
+
+                        <input class="btn-check" type="radio" name="btnradio" value="3dReconstuction"
+                            id="swt3dReconstruction" autocomplete="off">
+                        <label class="btn btn-outline-primary text-white" for="swt3dReconstruction">3D
+                            Reconstruction</label>
+
+                        <input class="btn-check" type="radio" name="btnradio" value="sliceImage" id="swtSliceImage"
+                            autocomplete="off">
+                        <label class="btn btn-outline-primary text-white" for="swtSliceImage">Slice Image</label>
+
+                        <input class="btn-check" type="radio" name="btnradio" value="rayTracing" id="swtRayTracing"
+                            autocomplete="off">
+                        <label class="btn btn-outline-primary text-white" for="swtRayTracing">Ray Tracing</label>
+
+                        <input class="btn-check" type="radio" name="btnradio" value="freeze" id="btnFreeze"
+                            autocomplete="off">
+                        <label class="btn btn-outline-primary text-white" for="btnFreeze">Freeze</label>
+                    </div>
+                </div>
+
+                
 
                 <!-- Subtact Binary Threshold -->
                 <div class="row border-bottom pt-4">
@@ -252,6 +308,26 @@
 
 
             </div> -->
+        </div>
+
+        <!-- Modal -->
+        <div class="py-2">
+            <div class="modal" id="messageModal">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">RayVol</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p id="modal-text">Modal body text goes here.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script>

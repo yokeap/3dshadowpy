@@ -71,8 +71,8 @@ class reconstruct:
         # imgHeight, imgWidth, channel = imgSource.shape
         imgHeight = posCrop[0][1] + posCrop[0][3]
         imgWidth = posCrop[0][0] + posCrop[0][2]
-        print("imgHeight = ", imgHeight)
-        print("imgWidth = ", imgWidth)
+        # print("imgHeight = ", imgHeight)
+        # print("imgWidth = ", imgWidth)
         if debug == True:
             cv2.imshow("Skeleton image", imgSkeleton)
         # scaning input binary image to detect the object edge
@@ -354,7 +354,7 @@ class reconstruct:
             figSpline.scatter(
                 self.sliceSplineLower[:, 0, 0], self.sliceSplineLower[:, 1, 0], marker='o')
             figSpline.show()
-        return self.slicingObj, self.objVolume
+        return self.slicingObj, self.objVolume, self.totalLength
 
     def imgChart_3d(self):
         imgObjEdgeUpper = np.array(self.edgeObjUpper)

@@ -36,7 +36,7 @@ const chart3D = lightningChart().Chart3D({
     disableAnimations: true,
     container: '3dChart'
     // theme: Themes.darkGold
-}).setBoundingBox({ x: 1.0, y: 0.5, z: 1.0}).setTitle('3D Scatter Chart')
+}).setBoundingBox({ x: 1.0, y: 0.5, z: 1.0 }).setTitle('3D Point Cloud Reconstruction')
 
 // Set Axis titles
 chart3D.getDefaultAxisX().setTitle('Axis X');
@@ -51,25 +51,30 @@ const pointSeries3D = chart3D.addPointSeries()
     }))
     .setName('3d-data')
 
-socket.on('3d-data', function (data) {
+socket.on('reconstruction-data', function (data) {
     var JSON_received = JSON.parse(data);
     pointSeries3D.clear()
     // var test = [JSON_received.ptCloud.x[0], JSON_received.ptCloud.y[0], JSON_received.ptCloud.z[0]];
     // console.log(JSON_received);
     jsonData = 0;
-    for (let i = 0; i < (JSON_received.ptCloud.x.length); i++){
+    for (let i = 0; i < (JSON_received.ptCloud.x.length); i++) {
         // pointSeries3D.add([JSON_received.ptCloud.x[i], JSON_received.ptCloud.y[i], JSON_received.ptCloud.z[i]]);
         jsonData = {
             x: JSON_received.ptCloud.x[i],
             z: JSON_received.ptCloud.y[i],
             y: JSON_received.ptCloud.z[i]
-        } 
+        }
         pointSeries3D.add([jsonData]);
     }
-    
+
     chart3D.setTitle("");
     chart3D.setTitle(chart3D.getTitle() + ` (${JSON_received.volume} cm^3)`);
-        // Set explicit Y Axis interval.
+
+    document.getElementById("totalPointCloud").innerHTML = JSON_received.ptCloud.x.length + JSON_received.ptCloud.y.length + JSON_received.ptCloud.z.length;
+    document.getElementById("computeTime").innerHTML = JSON_received.computeTime.toFixed(3);
+    document.getElementById("volume").innerHTML = JSON_received.volume.toFixed(2);
+    document.getElementById("length").innerHTML = JSON_received.length.toFixed(2);
+    // Set explicit Y Axis interval.
     // chart3D.getDefaultAxisY().setInterval(0, 150, 2000, true)
 });
 

@@ -18,7 +18,7 @@ from engineio.payload import Payload
 Payload.max_decode_packets = 50
 
 app = Flask(__name__, template_folder='./view', static_folder='./view')
-socketio = SocketIO(app)
+socketio = SocketIO(app,ping_timeout=5,ping_interval=5)
 
 global config
 
@@ -44,6 +44,7 @@ def index():
 
 @app.route('/config', methods=['POST', 'GET'])
 def configHandler():
+    camera.socketConnectStatus = False
     result = {}
     if request.method == 'POST':
         jsonData = request.get_json()
@@ -100,8 +101,17 @@ def saveHandler():
 # def recvHandler():
 #     return render_template('index.html')   
 
+@app.route('/config_feed')
+def config_feed():
+    camera.configFeedStatus = True
+    # return Response(camera.thread_raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    if not camera.threadGenFrames.is_alive():
+        camera.threadGenFrames.start()
+    return Response(camera.raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 @app.route('/raw_feed')
 def raw_feed():
+    camera.configFeedStatus = False
     # return Response(camera.thread_raw_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
     if not camera.threadGenFrames.is_alive():
         camera.threadGenFrames.start()
