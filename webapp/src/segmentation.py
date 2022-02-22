@@ -74,13 +74,17 @@ def obj(imgROI, imgHSV, hue, saturation, value):
     # imgHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
     imgObj = cv2.inRange(
         imgHSV, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
+    imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=2)
+    # cv2.imshow("imgObj HUE Range", imgObj)
     contours, hierarchy = cv2.findContours(
         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
-    cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+        # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+        cnt = cv2.convexHull(big_contour)
+        cv2.drawContours(imgObj, [cnt], 0, (255, 255, 255), -1)
     # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
     # masking process for image object with black backgroubd color
     imgMask = np.zeros_like(imgROI)
@@ -97,13 +101,21 @@ def shadow(imgROI, imgObj):
     ret, imgROI = cv2.threshold(imgROI, 1, 255, cv2.THRESH_BINARY)
     # cv2.imshow("Input Shadow Image", imgROI)
     imgShadow = cv2.bitwise_xor(imgObj, imgROI)
-    # cv2.imshow("EX OR", imgShadow)
-    imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8), iterations=1)
-
+    imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=5)
+    cv2.imshow("EX OR", imgShadow)
     # imgShadow = cv2.erode(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
     # imgShadow = cv2.dilate(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
-    # contours, hierarchy = cv2.findContours(
-    #     imgShadow, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    imgContour = np.zeros_like(imgShadow)
+    contours, hierarchy = cv2.findContours(
+        imgShadow, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+
+    if len(contours) != 0:
+        # find the biggest area of the contour
+        big_contour = max(contours, key=cv2.contourArea)
+        # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+        cnt = cv2.convexHull(big_contour)
+        cv2.drawContours(imgContour, [cnt], 0, (255, 255, 255), -1)
 
     # Contour filtering to get largest area
     # area_thresh = 0
@@ -123,7 +135,8 @@ def shadow(imgROI, imgObj):
         # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN,
         #                              np.ones((15, 15), np.uint8))
     # cv2.drawContours(imgShadow, big_contour, 0, 255, 1)
-    return imgShadow
+    imgExOr = cv2.bitwise_xor(imgContour, imgObj)
+    return cv2.bitwise_and(imgContour, imgExOr)
 
 
 def OpeningObj(img):
@@ -224,7 +237,7 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
     imgShadowOnObj = cv2.inRange(
         imgHSV, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
     contours, hierarchy = cv2.findContours(
-        imgShadowOnObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        imgShadowOnObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
