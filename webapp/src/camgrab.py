@@ -43,7 +43,7 @@ class camgrab:
         self.objReconstruct = reconstruct.reconstruct(1, config)
         self.cap = cv2.VideoCapture(0)
         self.setConfigDefault(config)
-        self.imgBg = cv2.imread("./ref/background.jpg")
+        self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =10)
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
         self.imgAndBinTreshold = config['imgAndBinTreshold']
@@ -127,6 +127,7 @@ class camgrab:
         while True:
             if self.cap != 0:
                 success, self.frame = self.cap.read()
+                self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=10)
                 self.success = success
                 if success == True and self.configFeedStatus == True:
                     self.success = False
@@ -170,7 +171,7 @@ class camgrab:
                     segmentSourceFeed.put(self.imgSegmentSource)
                     try:
                         self.imgObj, self.imgObjColor = self.process_imgObjColor(self.imgROI[0])
-                        queueROIFeed.put(self.imgObjColor)
+                        queueROIFeed.put(self.imgObj)
                         self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
                         queueShadow.put(self.imgShadow)
                         self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)

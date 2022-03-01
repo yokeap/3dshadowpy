@@ -24,7 +24,12 @@ with open('./config.json', 'r') as f:
 
 objReconstruct = reconstruct.reconstruct(1, config)
 imgBg = cv2.imread("./ref/background.jpg")
+cv2.imshow("Background Image", imgBg)
 frame = cv2.imread("./shots/obj.jpg")
+cv2.imshow("Input Image", frame)
+
+imgBg = cv2.fastNlMeansDenoisingColored(imgBg, h=10)
+frame = cv2.fastNlMeansDenoisingColored(frame, h=10)
 
 def process_imgObjColor(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
@@ -33,23 +38,28 @@ def process_imgObjColor(imgROI):
 
 def process_imgShadowOnObj(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
-    h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+    # h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+    # print(v)
     # h = cv2.calcHist([h],[0],None,[360],[0,360])
     # s = cv2.calcHist([s],[0],None,[256],[0,256])
     # v = cv2.calcHist([v],[0],None,[256],[0,256])
-    print(otsu(v))
-    # imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, config["shadowOnObj"]["hue"], config["shadowOnObj"]["saturation"], config["shadowOnObj"]["value"])
+    # print(otsu(imageHSV[:,:,2]))
+    imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, config["shadowOnObj"]["hue"], config["shadowOnObj"]["saturation"], config["shadowOnObj"]["value"])
     # imgShadowOnObj = measure.find_contours(imgShadowOnObj, 0.1)
     # imgShadowOnObj = np.asarray(imgShadowOnObj, dtype="uint8")
-    return imgROI 
+    return imgShadowOnObj
 
 def otsu(hist_channel):
-    is_normalized = True
+    is_normalized = False
+    index_start = 50
     # Set total number of bins in the histogram
     bins_num = 256
 
     # Get the image histogram
     hist, bin_edges = np.histogram(hist_channel, bins=bins_num)
+
+    hist = hist[index_start:]
+    bin_edges = bin_edges[index_start:]
 
     # Get normalized histogram if it is required
     if is_normalized:
@@ -72,8 +82,8 @@ def otsu(hist_channel):
     # Maximize the inter_class_variance function val
     index_of_max_val = np.argmax(inter_class_variance)
 
-    threshold = bin_mids[:-1][index_of_max_val]
-    # print("Otsu's algorithm implementation thresholding result: ", threshold)
+    threshold = (bin_mids[:-1][index_of_max_val]) / 100.0
+    print("Otsu's algorithm implementation thresholding result: ", threshold)
     return threshold
 
 diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)

@@ -77,14 +77,14 @@ def obj(imgROI, imgHSV, hue, saturation, value):
     imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=2)
     # cv2.imshow("imgObj HUE Range", imgObj)
     contours, hierarchy = cv2.findContours(
-        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    
+        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    imgConvex = np.zeros_like(imgObj)
     if len(contours) != 0:
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
         # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
         cnt = cv2.convexHull(big_contour)
-        cv2.drawContours(imgObj, [cnt], 0, (255, 255, 255), -1)
+        cv2.drawContours(imgConvex, [cnt], 0, (255, 255, 255), -1)
     # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
     # masking process for image object with black backgroubd color
     imgMask = np.zeros_like(imgROI)
@@ -92,7 +92,7 @@ def obj(imgROI, imgHSV, hue, saturation, value):
     imgMask[:, :, 1] = imgObj
     imgMask[:, :, 2] = imgObj
     imgObjColor = cv2.bitwise_and(imgMask, imgROI)
-    return imgObj, imgObjColor
+    return imgConvex, imgObjColor
 
 
 def shadow(imgROI, imgObj):
@@ -220,6 +220,7 @@ def pseudoSkeleton(imgObj):
 
 
 def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
+    # h, s, v = imgHSV[:,:,0], imgHSV[:,:,1], imgHSV[:,:,2]
     # Define thresholds for channel 1 based on histogram settings
     channel1Min = int(float(hue["min"]) * 360)
     channel1Max = int(float(hue["max"]) * 360)
@@ -230,7 +231,7 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
 
     # Define thresholds for channel 3 based on histogram settings
     channel3Min = int(float(value["min"]) * 255)
-    channel3Max = int(float(value["max"]) * 255)
+    channel3Max = int(float(mathTools.otsu(imgHSV[:,:,2])) * 255)
 
     imgShadowOnObj = np.zeros_like(imgObjColor)
     # hsv = cv2.cvtColor(imgObjColor, cv2.COLOR_BGR2HSV_FULL)
@@ -245,14 +246,14 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
     contour_dp1 = [cv2.approxPolyDP(cnt,4.5,True) for cnt in contours]
     if len(contours) != 0:
         # find the biggest area of the contour
-        # big_contour = max(contours, key=cv2.contourArea)
+        big_contour = max(contours, key=cv2.contourArea)
         # cnt = cv2.convexHull(big_contour)
-        # cv2.drawContours(imgConvex, [cnt], 0, (255, 255, 255), -1)
+        cv2.drawContours(imgConvex, [big_contour], 0, (255, 255, 255), -1)
         # contour_dp1 = cv2.approxPolyDP(big_contour,4.5,True)
-        cv2.drawContours(imgConvex, contour_dp1, 0, (255, 255, 255), -1)
+        # cv2.drawContours(imgConvex, contour_dp1, 0, (255, 255, 255), -1)
 
     # cv2.drawContours(imgShadowOnObj, big_contour, 0, 255, -1)
     # imgShadowOnObj = cv2.erode(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
     # imgShadowOnObj = cv2.dilate(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
     # imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
-    return imgShadowOnObj
+    return imgConvex
