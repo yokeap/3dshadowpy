@@ -1,3 +1,4 @@
+from unicodedata import is_normalized
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize, convex_hull_image
@@ -5,11 +6,12 @@ from skimage import measure
 from src import mathTools
 from src import segmentation
 from src import reconstruct
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plot
 import os
 import json
 import time
 
+plot.style.use('seaborn-darkgrid')
 
 # start timer
 start = time.time()
@@ -31,10 +33,48 @@ def process_imgObjColor(imgROI):
 
 def process_imgShadowOnObj(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
-    imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, config["shadowOnObj"]["hue"], config["shadowOnObj"]["saturation"], config["shadowOnObj"]["value"])
+    h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+    # h = cv2.calcHist([h],[0],None,[360],[0,360])
+    # s = cv2.calcHist([s],[0],None,[256],[0,256])
+    # v = cv2.calcHist([v],[0],None,[256],[0,256])
+    print(otsu(v))
+    # imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, config["shadowOnObj"]["hue"], config["shadowOnObj"]["saturation"], config["shadowOnObj"]["value"])
     # imgShadowOnObj = measure.find_contours(imgShadowOnObj, 0.1)
     # imgShadowOnObj = np.asarray(imgShadowOnObj, dtype="uint8")
-    return imgShadowOnObj 
+    return imgROI 
+
+def otsu(hist_channel):
+    is_normalized = True
+    # Set total number of bins in the histogram
+    bins_num = 256
+
+    # Get the image histogram
+    hist, bin_edges = np.histogram(hist_channel, bins=bins_num)
+
+    # Get normalized histogram if it is required
+    if is_normalized:
+        hist = np.divide(hist.ravel(), hist.max())
+
+    # Calculate centers of bins
+    bin_mids = (bin_edges[:-1] + bin_edges[1:]) / 2.
+
+    # Iterate over all thresholds (indices) and get the probabilities w1(t), w2(t)
+    weight1 = np.cumsum(hist)
+    weight2 = np.cumsum(hist[::-1])[::-1]
+
+    # Get the class means mu0(t)
+    mean1 = np.cumsum(hist * bin_mids) / weight1
+    # Get the class means mu1(t)
+    mean2 = (np.cumsum((hist * bin_mids)[::-1]) / weight2[::-1])[::-1]
+
+    inter_class_variance = weight1[:-1] * weight2[1:] * (mean1[:-1] - mean2[1:]) ** 2
+
+    # Maximize the inter_class_variance function val
+    index_of_max_val = np.argmax(inter_class_variance)
+
+    threshold = bin_mids[:-1][index_of_max_val]
+    # print("Otsu's algorithm implementation thresholding result: ", threshold)
+    return threshold
 
 diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
 cv2.imshow("Diff Image", diffImage)
@@ -54,13 +94,13 @@ imgObj, imgObjColor = process_imgObjColor(imgROI[0])
 cv2.imshow("Image Obj", imgObj)
 imgShadow = segmentation.shadow(imgROI[0], imgObj)
 cv2.imshow("Shadow", imgShadow)
-# imgShadowOnObj = process_imgShadowOnObj(imgObjColor)
-# cv2.imshow("Image Shadow on Object", imgShadowOnObj)
+imgShadowOnObj = process_imgShadowOnObj(imgObjColor)
+cv2.imshow("Image Shadow on Object", imgShadowOnObj)
 
 # objReconstruct.reconstruct(frame, imgObj, imgShadowOnObj, imgShadow, posCrop)
 # ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)
 
-# objReconstruct.pointCloudChart_3d()
+# # objReconstruct.pointCloudChart_3d()
 
 # end = time.time()
 # print("processed time = ", (end - start), "s")

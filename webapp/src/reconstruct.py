@@ -181,6 +181,10 @@ class reconstruct:
                                                     2] = 0
                             self.ptCloudMiddleRight[self.loop,
                                                      2] = 0
+                            # self.ptCloudMiddleLeft[self.loop,
+                            #                         2] = 0
+                            # self.ptCloudMiddleRight[self.loop,
+                            #                          2] = 0
                             self.ptCloudObjUpper[self.loop,
                                                        2] = skeletonHeight / 2
                             self.ptCloudObjLower[self.loop,
@@ -192,11 +196,12 @@ class reconstruct:
                     flagObjLowerEdge = True
                     posLower = [x, y, 1]
                     posLowerWorld = mathTools.homographyTransform(
-                        self.homographyMatrix, posLower, 0.2)
+                        self.homographyMatrix, posLower, self.scale)
                     self.edgeObjLower.append(np.array(posLower))
                     self.edgeObjLowerWorld.append(posLowerWorld)
-                    self.ptCloudMiddleRight[self.loop, 0] = posLowerWorld[0]
-                    self.ptCloudMiddleRight[self.loop, 1] = posLowerWorld[1]
+                    self.ptCloudMiddleRight[self.loop, :] = posLowerWorld
+                    # self.ptCloudMiddleRight[self.loop, 0] = posLowerWorld[0]
+                    # self.ptCloudMiddleRight[self.loop, 1] = posLowerWorld[1]
                     break
         print(self.loop)
 
@@ -239,16 +244,16 @@ class reconstruct:
             # when computed upper point cloud from shadow is right dominant
             # append x of middle right, upper right, mirror upper right and middle left to 3d array
             if abs(self.ptCloudMiddleRight[i, 0] - self.ptCloudObjUpper[i, 0]) < abs(self.ptCloudMiddleLeft[i, 0] - self.ptCloudObjUpper[i, 0]):
-                mirrorUpperXposFromLeft = self.ptCloudMiddleLeft[i, 0] + abs(self.ptCloudMiddleRight[i, 0] - self.ptCloudObjUpper[i, 0])
+                mirrorUpperXposFromRight = self.ptCloudMiddleLeft[i, 0] + abs(self.ptCloudMiddleRight[i, 0] - self.ptCloudObjUpper[i, 0])
                 # append x of middle right, upper right, mirror upper right and middle left to 3d array
-                self.halfSliceUpper[:, 0, i] = (self.ptCloudMiddleRight[i, 0], self.ptCloudObjUpper[i, 0], mirrorUpperXposFromLeft, self.ptCloudMiddleLeft[i, 0])
+                self.halfSliceUpper[:, 0, i] = (self.ptCloudMiddleRight[i, 0], self.ptCloudObjUpper[i, 0], mirrorUpperXposFromRight, self.ptCloudMiddleLeft[i, 0])
                 # append y of middle left, lower left, mirror lower right and middle right
                 self.halfSliceUpper[:, 1, i] = (self.ptCloudMiddleRight[i, 2], self.ptCloudObjUpper[i, 2], self.ptCloudObjUpper[i, 2], self.ptCloudMiddleLeft[i, 2])
             else:
             # when computed upper point cloud from shadow is left dominant
-                mirrorUpperXposFromRight = self.ptCloudMiddleRight[i, 0] - abs(self.ptCloudMiddleLeft[i, 0] - self.ptCloudObjUpper[i, 0])
+                mirrorUpperXposFromLeft = self.ptCloudMiddleRight[i, 0] - abs(self.ptCloudMiddleLeft[i, 0] - self.ptCloudObjUpper[i, 0])
                 # append x of middle right, upper right, mirror upper right and middle left to 3d array
-                self.halfSliceUpper[:, 0, i] = (self.ptCloudMiddleRight[i, 0], mirrorUpperXposFromRight, self.ptCloudObjUpper[i, 0], self.ptCloudMiddleLeft[i, 0])
+                self.halfSliceUpper[:, 0, i] = (self.ptCloudMiddleRight[i, 0], mirrorUpperXposFromLeft, self.ptCloudObjUpper[i, 0], self.ptCloudMiddleLeft[i, 0])
                 # append y of middle left, lower left, mirror lower right and middle right
                 self.halfSliceUpper[:, 1, i] = (self.ptCloudMiddleRight[i, 2], self.ptCloudObjUpper[i, 2], self.ptCloudObjUpper[i, 2], self.ptCloudMiddleLeft[i, 2])
 
@@ -340,19 +345,21 @@ class reconstruct:
             [self.sliceSplineX, self.sliceSplineY, self.sliceSplineZ]).T
 
         debug = False
+        sliceNumber = 50
         if debug == True:
             figSlicing = plot
             figSlicing.scatter(
-                self.halfSliceUpper[:, 0, 0], self.halfSliceUpper[:, 1, 0], marker='o')
+                self.halfSliceUpper[:, 0, sliceNumber], self.halfSliceUpper[:, 1, sliceNumber], marker='o')
             figSlicing.scatter(
-                self.halfSliceLower[:, 0, 0], self.halfSliceLower[:, 1, 0], marker='o')
+                self.halfSliceLower[:, 0, sliceNumber], self.halfSliceLower[:, 1, sliceNumber], marker='o')
             figSlicing.show()
 
             figSpline = plot
             figSpline.scatter(
-                self.sliceSplineUpper[:, 0, 0], self.sliceSplineUpper[:, 1, 0], marker='o')
+                self.sliceSplineUpper[:, 0, sliceNumber], self.sliceSplineUpper[:, 1, sliceNumber], marker='o')
             figSpline.scatter(
-                self.sliceSplineLower[:, 0, 0], self.sliceSplineLower[:, 1, 0], marker='o')
+                self.sliceSplineLower[:, 0, sliceNumber], self.sliceSplineLower[:, 1, sliceNumber], marker='o')
+            
             figSpline.show()
         return self.slicingObj, self.objVolume, self.totalLength
 

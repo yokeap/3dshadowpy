@@ -101,8 +101,8 @@ def shadow(imgROI, imgObj):
     ret, imgROI = cv2.threshold(imgROI, 1, 255, cv2.THRESH_BINARY)
     # cv2.imshow("Input Shadow Image", imgROI)
     imgShadow = cv2.bitwise_xor(imgObj, imgROI)
-    imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=5)
-    cv2.imshow("EX OR", imgShadow)
+    imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    # cv2.imshow("EX OR", imgShadow)
     # imgShadow = cv2.erode(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
     # imgShadow = cv2.dilate(imgShadow, np.ones((5, 5), np.uint8), iterations=1)
 
@@ -236,13 +236,23 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
     # hsv = cv2.cvtColor(imgObjColor, cv2.COLOR_BGR2HSV_FULL)
     imgShadowOnObj = cv2.inRange(
         imgHSV, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
+    imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    # imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=3)
+    
+    imgConvex = np.zeros_like(imgShadowOnObj)
     contours, hierarchy = cv2.findContours(
         imgShadowOnObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contour_dp1 = [cv2.approxPolyDP(cnt,4.5,True) for cnt in contours]
     if len(contours) != 0:
         # find the biggest area of the contour
-        big_contour = max(contours, key=cv2.contourArea)
-    cv2.drawContours(imgShadowOnObj, big_contour, 0, 255, -1)
+        # big_contour = max(contours, key=cv2.contourArea)
+        # cnt = cv2.convexHull(big_contour)
+        # cv2.drawContours(imgConvex, [cnt], 0, (255, 255, 255), -1)
+        # contour_dp1 = cv2.approxPolyDP(big_contour,4.5,True)
+        cv2.drawContours(imgConvex, contour_dp1, 0, (255, 255, 255), -1)
+
+    # cv2.drawContours(imgShadowOnObj, big_contour, 0, 255, -1)
     # imgShadowOnObj = cv2.erode(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
     # imgShadowOnObj = cv2.dilate(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
-    imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    # imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
     return imgShadowOnObj
