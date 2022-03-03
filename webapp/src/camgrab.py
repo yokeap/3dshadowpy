@@ -43,7 +43,7 @@ class camgrab:
         self.objReconstruct = reconstruct.reconstruct(1, config)
         self.cap = cv2.VideoCapture(0)
         self.setConfigDefault(config)
-        self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =10)
+        self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
         self.imgAndBinTreshold = config['imgAndBinTreshold']
@@ -86,7 +86,7 @@ class camgrab:
             raise IOError("Cannot open webcam")
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, config['width'])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # manual mode
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
         self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
@@ -126,8 +126,9 @@ class camgrab:
         end = 0
         while True:
             if self.cap != 0:
+                start = time.time()
                 success, self.frame = self.cap.read()
-                self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=10)
+                self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
                 self.success = success
                 if success == True and self.configFeedStatus == True:
                     self.success = False
@@ -144,7 +145,7 @@ class camgrab:
 
                     # print("Fire")
                     # start timer
-                    start = time.time()
+                    # start = time.time()
                     self.success = False
                     self.rawframe = self.frame.copy()
                     queueRawFeed.put(self.frame)

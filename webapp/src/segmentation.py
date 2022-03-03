@@ -77,7 +77,7 @@ def obj(imgROI, imgHSV, hue, saturation, value):
     imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=2)
     # cv2.imshow("imgObj HUE Range", imgObj)
     contours, hierarchy = cv2.findContours(
-        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     imgConvex = np.zeros_like(imgObj)
     if len(contours) != 0:
         # find the biggest area of the contour

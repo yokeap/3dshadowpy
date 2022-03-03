@@ -73,6 +73,7 @@ class reconstruct:
         imgWidth = posCrop[0][0] + posCrop[0][2]
         # print("imgHeight = ", imgHeight)
         # print("imgWidth = ", imgWidth)
+        debug = True
         if debug == True:
             cv2.imshow("Skeleton image", imgSkeleton)
         # scaning input binary image to detect the object edge

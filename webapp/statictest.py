@@ -14,7 +14,6 @@ import time
 plot.style.use('seaborn-darkgrid')
 
 # start timer
-start = time.time()
 
 global config
 
@@ -28,8 +27,10 @@ cv2.imshow("Background Image", imgBg)
 frame = cv2.imread("./shots/obj.jpg")
 cv2.imshow("Input Image", frame)
 
-imgBg = cv2.fastNlMeansDenoisingColored(imgBg, h=10)
-frame = cv2.fastNlMeansDenoisingColored(frame, h=10)
+imgBg = cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
+
+# imgBg = cv2.fastNlMeansDenoisingColored(imgBg, h=1)
+# frame = cv2.fastNlMeansDenoisingColored(frame, h=1)
 
 def process_imgObjColor(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
@@ -86,7 +87,9 @@ def otsu(hist_channel):
     print("Otsu's algorithm implementation thresholding result: ", threshold)
     return threshold
 
-diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
+start = time.time()
+
+diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - imgBg
 cv2.imshow("Diff Image", diffImage)
 ret, imgDiffBin = cv2.threshold(diffImage, 232, 255, cv2.THRESH_BINARY_INV)
 cv2.imshow("Diff Image Thresholded", imgDiffBin)
@@ -112,8 +115,8 @@ cv2.imshow("Image Shadow on Object", imgShadowOnObj)
 
 # # objReconstruct.pointCloudChart_3d()
 
-# end = time.time()
-# print("processed time = ", (end - start), "s")
+end = time.time()
+print("processed time = ", (end - start), "s")
 
 # objReconstruct.volumeChart(end - start)
 
