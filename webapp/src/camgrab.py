@@ -40,10 +40,11 @@ class camgrab:
     def __init__(self, config, socket):
         # self.objReconstruct = reconstruct.reconstruct(1.0, config)
         # for test with fish
+        self.cap = cap = cv2.VideoCapture(0)
         self.objReconstruct = reconstruct.reconstruct(1, config)
-        self.cap = cv2.VideoCapture(0)
-        self.setConfigDefault(config)
-        self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
+        self.setConfig(config)
+        # self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
+        self.imgBg = cv2.imread("./ref/background.jpg")
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
         self.imgAndBinTreshold = config['imgAndBinTreshold']
@@ -86,8 +87,8 @@ class camgrab:
             raise IOError("Cannot open webcam")
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, config['width'])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
-        self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # manual mode
+        # self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
         self.cap.set(cv2.CAP_PROP_CONTRAST, config['contrast'])
@@ -98,8 +99,12 @@ class camgrab:
     def setConfig(self, config):
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, config['width'])
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)  # manual mode
+        # self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_CONTRAST, config['contrast'])
         self.cap.set(cv2.CAP_PROP_HUE, config['hue'])
         self.cap.set(cv2.CAP_PROP_SATURATION, config['saturation'])
@@ -120,6 +125,7 @@ class camgrab:
         loadConfig['hue'] = self.cap.get(cv2.CAP_PROP_HUE)
         loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION) + 64
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
+        print(loadConfig)
         return loadConfig
 
     def gen_frames(self, queueRawFeed, queueSubBackground, queueImgAndFeed, queueMorphFeed, segmentSourceFeed, queueROIFeed, queueShadow, queueShadowOnObjFeed):
@@ -128,10 +134,12 @@ class camgrab:
             if self.cap != 0:
                 start = time.time()
                 success, self.frame = self.cap.read()
-                self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
+                # self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
                 self.success = success
                 if success == True and self.configFeedStatus == True:
                     self.success = False
+                    if queueRawFeed.empty() == False:       #prevent memory leaks
+                        queueRawFeed.get()
                     queueRawFeed.put(self.frame)
                 if success == True and self.socketConnectStatus == True and self.feedStatus != "freeze":
                     # for test with fish
@@ -148,16 +156,22 @@ class camgrab:
                     # start = time.time()
                     self.success = False
                     self.rawframe = self.frame.copy()
+                    if queueRawFeed.empty() == False:
+                        queueRawFeed.get()
                     queueRawFeed.put(self.frame)
                     self.diffImage = cv2.cvtColor(
                         self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
                     ret, self.imgDiffBin = cv2.threshold(
                         self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
+                    if queueSubBackground.empty() == False:
+                        queueSubBackground.get()
                     queueSubBackground.put(self.diffImage)
                     self.imgAnd = cv2.bitwise_and(
                         self.imgDiffBin, self.diffImage)
                     ret, self.imgBin = cv2.threshold(
                         self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
+                    if queueImgAndFeed.empty() == False:
+                        queueImgAndFeed.get()
                     queueImgAndFeed.put(self.imgBin)
                     self.imgOpening = cv2.morphologyEx(
                         self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
@@ -166,16 +180,26 @@ class camgrab:
                             self.imgOpening, self.medianBlur)
                     except Exception as e:
                         pass
+                    if queueMorphFeed.empty() == False:
+                        queueMorphFeed.get()
                     queueMorphFeed.put(self.imgOpening)
                     self.imgSegmentSource, self.imgSegmentBlack, self.imgROI, self.posCrop = segmentation.objShadow(
                         self.frame, self.imgOpening)
+                    if segmentSourceFeed.empty() == False:
+                        segmentSourceFeed.get()
                     segmentSourceFeed.put(self.imgSegmentSource)
                     try:
                         self.imgObj, self.imgObjColor = self.process_imgObjColor(self.imgROI[0])
+                        if queueROIFeed.empty() == False:
+                            queueROIFeed.get()
                         queueROIFeed.put(self.imgObj)
                         self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
+                        if queueShadow.empty() == False:
+                            queueShadow.get()
                         queueShadow.put(self.imgShadow)
                         self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
+                        if queueShadowOnObjFeed.empty() == False:
+                            queueShadowOnObjFeed.get()
                         queueShadowOnObjFeed.put(self.imgShadowOnObj)
                         self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgShadowOnObj, self.imgShadow, self.posCrop )
                         ptCloud, volume, length = self.objReconstruct.reconstructVolume(0.05)
@@ -202,6 +226,7 @@ class camgrab:
                         pass
                 else:
                     pass
+                
             else:
                 pass
 

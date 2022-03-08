@@ -50,12 +50,12 @@ def configHandler():
         jsonData = request.get_json()
         # write it back to the file
         print(jsonData)
-        if jsonData["browserEvent"] == "capture":
+        if jsonData["browserEvent"] == "capture": 
             camera.shotSetting()
             result['message'] = "success"
             return jsonify(result['message'])
         elif jsonData["browserEvent"] == "config-load":
-            camera.setConfigDefault(config["default"])
+            camera.setConfig(config["default"])
             return jsonify(config["default"])
         elif jsonData["browserEvent"] == "loaded":
             # camera.gen_frames()
@@ -65,7 +65,7 @@ def configHandler():
             
         else :
             print(jsonData)
-            camera.cap.set(cv2.CAP_PROP_EXPOSURE, jsonData['exposure'])
+            camera.cap.set(cv2.CAP_PROP_EXPOSURE, 180)
             camera.cap.set(cv2.CAP_PROP_BRIGHTNESS, jsonData['brightness'])
             camera.cap.set(cv2.CAP_PROP_CONTRAST, jsonData['contrast'])
             camera.cap.set(cv2.CAP_PROP_HUE, jsonData['hue'])
@@ -240,7 +240,7 @@ def capture_handle(jsonData):
         print("capture channel has not key:", pyObj)
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)
+    socketio.run(app, debug=False)
     # app.run(debug=True)
 
 camera.cap.release()

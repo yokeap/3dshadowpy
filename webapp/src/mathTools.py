@@ -2,6 +2,7 @@ import numpy as np
 import math
 from scipy import interpolate
 
+np.seterr(divide='ignore', invalid='ignore')
 
 def magnitudeCompute3D(origin, destination):
     origin = np.array(origin)

@@ -231,7 +231,8 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
 
     # Define thresholds for channel 3 based on histogram settings
     channel3Min = int(float(value["min"]) * 255)
-    channel3Max = int(float(mathTools.otsu(imgHSV[:,:,2])) * 255)
+    # channel3Max = int(float(mathTools.otsu(imgHSV[:,:,2])) * 255)
+    channel3Max = int(float(value["max"]) * 255)
 
     imgShadowOnObj = np.zeros_like(imgObjColor)
     # hsv = cv2.cvtColor(imgObjColor, cv2.COLOR_BGR2HSV_FULL)
