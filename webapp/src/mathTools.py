@@ -107,8 +107,8 @@ def otsu(hist_channel):
     # Get the image histogram
     hist, bin_edges = np.histogram(hist_channel, bins=bins_num)
 
-    hist = hist[index_start:]
-    bin_edges = bin_edges[index_start:]
+    # hist = hist[index_start:]
+    # bin_edges = bin_edges[index_start:]
 
     # Get normalized histogram if it is required
     if is_normalized:
@@ -131,6 +131,6 @@ def otsu(hist_channel):
     # Maximize the inter_class_variance function val
     index_of_max_val = np.argmax(inter_class_variance)
 
-    threshold = (bin_mids[:-1][index_of_max_val]) / 100.0
+    threshold = (bin_mids[:-1][index_of_max_val])
     print("Otsu's algorithm implementation thresholding result: ", threshold)
     return threshold

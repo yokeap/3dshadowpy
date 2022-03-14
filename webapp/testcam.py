@@ -26,7 +26,7 @@ cap = cv2.VideoCapture(0)
 if not cap.isOpened():
     raise IOError("Cannot open webcam")
 
-exposure = 130
+exposure = 100
 
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)

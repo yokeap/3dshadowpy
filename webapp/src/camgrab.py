@@ -40,10 +40,12 @@ class camgrab:
     def __init__(self, config, socket):
         # self.objReconstruct = reconstruct.reconstruct(1.0, config)
         # for test with fish
-        self.cap = cap = cv2.VideoCapture(0)
+        # if os.environ.get('WERKZEUG_RUN_MAIN'):
+        self.cap = cv2.VideoCapture(0)
         self.objReconstruct = reconstruct.reconstruct(1, config)
         self.setConfig(config)
         # self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
+        # self.imgBg = cv2.GaussianBlur(cv2.imread("./ref/background.jpg"),(5,5),0)
         self.imgBg = cv2.imread("./ref/background.jpg")
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
@@ -103,7 +105,7 @@ class camgrab:
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0)  # manual mode
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 1)  # manual mode
         # self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_CONTRAST, config['contrast'])
         self.cap.set(cv2.CAP_PROP_HUE, config['hue'])
@@ -119,11 +121,11 @@ class camgrab:
         loadConfig = {}
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
-        loadConfig['exposure'] = self.cap.get(cv2.CAP_PROP_EXPOSURE) - 1
+        loadConfig['exposure'] = self.cap.get(cv2.CAP_PROP_EXPOSURE)
         loadConfig['brightness'] = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
         loadConfig['contrast'] = self.cap.get(cv2.CAP_PROP_CONTRAST)
         loadConfig['hue'] = self.cap.get(cv2.CAP_PROP_HUE)
-        loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION) + 64
+        loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION)
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
         print(loadConfig)
         return loadConfig
@@ -134,6 +136,7 @@ class camgrab:
             if self.cap != 0:
                 start = time.time()
                 success, self.frame = self.cap.read()
+                # self.frame = cv2.GaussianBlur(self.frame,(5,5),0)
                 # self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
                 self.success = success
                 if success == True and self.configFeedStatus == True:
@@ -150,79 +153,82 @@ class camgrab:
                     # width = int(width * 0.2)
                     # self.imgBg = cv2.resize(self.imgBg, (width, height))
                     # self.frame = cv2.resize(self.frame, (width, height))
-
                     # print("Fire")
                     # start timer
                     # start = time.time()
                     self.success = False
-                    self.rawframe = self.frame.copy()
-                    if queueRawFeed.empty() == False:
-                        queueRawFeed.get()
-                    queueRawFeed.put(self.frame)
-                    self.diffImage = cv2.cvtColor(
-                        self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
-                    ret, self.imgDiffBin = cv2.threshold(
-                        self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
-                    if queueSubBackground.empty() == False:
-                        queueSubBackground.get()
-                    queueSubBackground.put(self.diffImage)
-                    self.imgAnd = cv2.bitwise_and(
-                        self.imgDiffBin, self.diffImage)
-                    ret, self.imgBin = cv2.threshold(
-                        self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
-                    if queueImgAndFeed.empty() == False:
-                        queueImgAndFeed.get()
-                    queueImgAndFeed.put(self.imgBin)
-                    self.imgOpening = cv2.morphologyEx(
-                        self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
                     try:
-                        self.imgOpening = cv2.medianBlur(
-                            self.imgOpening, self.medianBlur)
+                        self.rawframe = self.frame.copy()
+                        if queueRawFeed.empty() == False:
+                            queueRawFeed.get()
+                        queueRawFeed.put(self.frame)
+                        self.diffImage = cv2.cvtColor(
+                            self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
+                        ret, self.imgDiffBin = cv2.threshold(
+                            self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
+                        if queueSubBackground.empty() == False:
+                            queueSubBackground.get()
+                        queueSubBackground.put(self.diffImage)
+                        self.imgAnd = cv2.bitwise_and(
+                            self.imgDiffBin, self.diffImage)
+                        ret, self.imgBin = cv2.threshold(
+                            self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
+                        if queueImgAndFeed.empty() == False:
+                            queueImgAndFeed.get()
+                        queueImgAndFeed.put(self.imgBin)
+                        self.imgOpening = cv2.morphologyEx(
+                            self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+                        # try:
+                        #     self.imgOpening = cv2.medianBlur(
+                        #         self.imgOpening, self.medianBlur)
+                        # except Exception as e:
+                        #     pass
+                        if queueMorphFeed.empty() == False:
+                            queueMorphFeed.get()
+                        queueMorphFeed.put(self.imgOpening)
+                        self.imgSegmentSource, self.imgSegmentBlack, self.imgROI, self.posCrop = segmentation.objShadow(
+                            self.frame, self.imgOpening)
+                        if segmentSourceFeed.empty() == False:
+                            segmentSourceFeed.get()
+                        segmentSourceFeed.put(self.imgSegmentSource)
+                        try:
+                            self.imgObj, self.imgObjColor = self.process_imgObjColor(self.imgROI[0])
+                            if queueROIFeed.empty() == False:
+                                queueROIFeed.get()
+                            queueROIFeed.put(self.imgObj)
+                            self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
+                            if queueShadow.empty() == False:
+                                queueShadow.get()
+                            queueShadow.put(self.imgShadow)
+                            self.imgObjColor = cv2.GaussianBlur(self.imgObjColor,(5,5),0)
+                            self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
+                            if queueShadowOnObjFeed.empty() == False:
+                                queueShadowOnObjFeed.get()
+                            queueShadowOnObjFeed.put(self.imgShadowOnObj)
+                            self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgShadowOnObj, self.imgShadow, self.posCrop )
+                            ptCloud, volume, length = self.objReconstruct.reconstructVolume(0.05)
+                            end = time.time()
+                            # print("processed time = ", (end - start), "s")
+                            if self.socketConnectStatus == True:
+                                self.objJson = {
+                                    "ptCloud" : {
+                                        "x": ptCloud[:, 0].tolist(),
+                                        "y": ptCloud[:, 1].tolist(),
+                                        "z": ptCloud[:, 2].tolist(),
+                                    },
+                                    "volume": volume,
+                                    "length": length,
+                                    "computeTime": (end - start)
+                                }
+                                self.socket.emit('reconstruction-data', json.dumps(self.objJson))
+                                # self.objReconstruct.volumeChart(end - start)
+                        except Exception as e:
+                            print(e)
+                            queueROIFeed.put(np.zeros_like(self.frame))
+                            queueShadow.put(np.zeros_like(self.frame))
+                            queueShadowOnObjFeed.put(np.zeros_like(self.frame))
+                            pass
                     except Exception as e:
-                        pass
-                    if queueMorphFeed.empty() == False:
-                        queueMorphFeed.get()
-                    queueMorphFeed.put(self.imgOpening)
-                    self.imgSegmentSource, self.imgSegmentBlack, self.imgROI, self.posCrop = segmentation.objShadow(
-                        self.frame, self.imgOpening)
-                    if segmentSourceFeed.empty() == False:
-                        segmentSourceFeed.get()
-                    segmentSourceFeed.put(self.imgSegmentSource)
-                    try:
-                        self.imgObj, self.imgObjColor = self.process_imgObjColor(self.imgROI[0])
-                        if queueROIFeed.empty() == False:
-                            queueROIFeed.get()
-                        queueROIFeed.put(self.imgObj)
-                        self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
-                        if queueShadow.empty() == False:
-                            queueShadow.get()
-                        queueShadow.put(self.imgShadow)
-                        self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
-                        if queueShadowOnObjFeed.empty() == False:
-                            queueShadowOnObjFeed.get()
-                        queueShadowOnObjFeed.put(self.imgShadowOnObj)
-                        self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgShadowOnObj, self.imgShadow, self.posCrop )
-                        ptCloud, volume, length = self.objReconstruct.reconstructVolume(0.05)
-                        end = time.time()
-                        # print("processed time = ", (end - start), "s")
-                        if self.socketConnectStatus == True:
-                            self.objJson = {
-                                "ptCloud" : {
-                                    "x": ptCloud[:, 0].tolist(),
-                                    "y": ptCloud[:, 1].tolist(),
-                                    "z": ptCloud[:, 2].tolist(),
-                                },
-                                "volume": volume,
-                                "length": length,
-                                "computeTime": (end - start)
-                            }
-                            self.socket.emit('reconstruction-data', json.dumps(self.objJson))
-                            # self.objReconstruct.volumeChart(end - start)
-                    except Exception as e:
-                        print(e)
-                        queueROIFeed.put(np.zeros_like(self.frame))
-                        queueShadow.put(np.zeros_like(self.frame))
-                        queueShadowOnObjFeed.put(np.zeros_like(self.frame))
                         pass
                 else:
                     pass
@@ -340,8 +346,7 @@ class camgrab:
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
         now = datetime.datetime.now()
-        p = os.path.sep.join(
-            ['shots', "shot_{}.jpg".format(str(now).replace(":", ''))])
+        p = os.path.sep.join(['ref', "background.jpg"])
         cv2.imwrite(p, self.frame)
 
     def captureAll(self):

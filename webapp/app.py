@@ -15,10 +15,10 @@ import pandas as pd
 import numpy as np
 from engineio.payload import Payload
 
-Payload.max_decode_packets = 50
+# Payload.max_decode_packets = 50
 
 app = Flask(__name__, template_folder='./view', static_folder='./view')
-socketio = SocketIO(app,ping_timeout=5,ping_interval=5)
+socketio = SocketIO(app, async_mode="threading")
 
 global config
 
@@ -65,13 +65,14 @@ def configHandler():
             
         else :
             print(jsonData)
-            camera.cap.set(cv2.CAP_PROP_EXPOSURE, 180)
+            camera.cap.set(cv2.CAP_PROP_EXPOSURE, jsonData['exposure'])
             camera.cap.set(cv2.CAP_PROP_BRIGHTNESS, jsonData['brightness'])
             camera.cap.set(cv2.CAP_PROP_CONTRAST, jsonData['contrast'])
             camera.cap.set(cv2.CAP_PROP_HUE, jsonData['hue'])
             camera.cap.set(cv2.CAP_PROP_SATURATION, jsonData['saturation'])
             camera.cap.set(cv2.CAP_PROP_SHARPNESS, jsonData['sharpness'])
             result['message'] = "success"
+            print(camera.cap.get(cv2.CAP_PROP_EXPOSURE))
             return jsonify(result['message'])
         # camera.setConfig(jsonData)
         
@@ -234,6 +235,7 @@ def save_config_handle(jsonData):
 @socketio.on('capture')
 def capture_handle(jsonData):
     pyObj = json.loads(jsonData)
+    print("All picture has been captured")
     if pyObj['capture'] == True:
         camera.captureAll()           #capture pic to directory
     else:

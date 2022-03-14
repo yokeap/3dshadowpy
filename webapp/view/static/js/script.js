@@ -126,14 +126,14 @@ radios.forEach(
 );
 
 function saveCapture(){
-    // socket.emit('capture', JSON.stringify({ capture : true }))
+    socket.emit('capture', JSON.stringify({ capture : true }))
     var messageModal = new bootstrap.Modal(document.getElementById('messageModal'), {});
     document.getElementById("modal-text").innerHTML = "Data and picture have been saved";
     messageModal.toggle()
 }
 
 function saveParams(){
-    // socket.emit('save-config', JSON.stringify({ saveParams : true }))
+    socket.emit('save-config', JSON.stringify({ saveParams : true }))
     var messageModal = new bootstrap.Modal(document.getElementById('messageModal'), {});
     document.getElementById("modal-text").innerHTML = "Parameters have been saved";
     messageModal.toggle();
