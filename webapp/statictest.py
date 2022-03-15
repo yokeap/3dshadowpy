@@ -2,6 +2,7 @@ from unicodedata import is_normalized
 import cv2
 import numpy as np
 from skimage.morphology import skeletonize, convex_hull_image
+from skimage.filters import threshold_otsu
 from skimage import measure
 from src import mathTools
 from src import segmentation
@@ -22,9 +23,9 @@ with open('./config.json', 'r') as f:
     config = json.load(f)
 
 objReconstruct = reconstruct.reconstruct(1, config)
-imgBg = cv2.imread("./ref/background.jpg")
+imgBg = cv2.GaussianBlur(cv2.imread("./ref/background.jpg"),(5,5),0)
 cv2.imshow("Background Image", imgBg)
-frame = cv2.imread("./shots/obj.jpg")
+frame = cv2.GaussianBlur(cv2.imread("./shots/obj.jpg"),(5,5),0)
 cv2.imshow("Input Image", frame)
 
 imgBg = cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
@@ -39,12 +40,17 @@ def process_imgObjColor(imgROI):
 
 def process_imgShadowOnObj(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
-    # h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+    h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
     # print(v)
     # h = cv2.calcHist([h],[0],None,[360],[0,360])
-    # s = cv2.calcHist([s],[0],None,[256],[0,256])
-    # v = cv2.calcHist([v],[0],None,[256],[0,256])
-    # print(otsu(imageHSV[:,:,2]))
+    # s = cv2.calcHist([s],[0],None,[256],[5,250])
+    # v = cv2.calcHist([v],[0],None,[256],[5,256])
+    thresholds = threshold_otsu(v.ravel())
+    print(thresholds)
+    # plot.plot(s)
+    # plot.xlim([0,256])
+    # plot.ylim((np.mean(h) + 0.5 * np.std(h)).tolist())
+    # plot.show()
     imgShadowOnObj = segmentation.shadowEdgeOnObj(imgROI, imageHSV, config["shadowOnObj"]["hue"], config["shadowOnObj"]["saturation"], config["shadowOnObj"]["value"])
     # imgShadowOnObj = measure.find_contours(imgShadowOnObj, 0.1)
     # imgShadowOnObj = np.asarray(imgShadowOnObj, dtype="uint8")
@@ -58,9 +64,6 @@ def otsu(hist_channel):
 
     # Get the image histogram
     hist, bin_edges = np.histogram(hist_channel, bins=bins_num)
-
-    hist = hist[index_start:]
-    bin_edges = bin_edges[index_start:]
 
     # Get normalized histogram if it is required
     if is_normalized:
@@ -83,7 +86,7 @@ def otsu(hist_channel):
     # Maximize the inter_class_variance function val
     index_of_max_val = np.argmax(inter_class_variance)
 
-    threshold = (bin_mids[:-1][index_of_max_val]) / 100.0
+    threshold = (bin_mids[:-1][index_of_max_val]) 
     print("Otsu's algorithm implementation thresholding result: ", threshold)
     return threshold
 
@@ -102,13 +105,15 @@ cv2.imshow("Image Closing", imgClose)
 
 imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(frame, imgClose)
 cv2.imshow("Image ROI", imgROI[0])
+cv2.imwrite('./imageroi.jpg', imgROI[0])
 
 imgObj, imgObjColor = process_imgObjColor(imgROI[0])
 cv2.imshow("Image Obj", imgObj)
-imgShadow = segmentation.shadow(imgROI[0], imgObj)
-cv2.imshow("Shadow", imgShadow)
-imgShadowOnObj = process_imgShadowOnObj(imgObjColor)
-cv2.imshow("Image Shadow on Object", imgShadowOnObj)
+cv2.imshow("Image Object Color", imgObjColor)
+# imgShadow = segmentation.shadow(imgROI[0], imgObj)
+# cv2.imshow("Shadow", imgShadow)
+# imgShadowOnObj = process_imgShadowOnObj(imgObjColor)
+# cv2.imshow("Image Shadow on Object", imgShadowOnObj)
 
 # objReconstruct.reconstruct(frame, imgObj, imgShadowOnObj, imgShadow, posCrop)
 # ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)

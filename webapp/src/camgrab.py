@@ -43,7 +43,8 @@ class camgrab:
         self.objReconstruct = reconstruct.reconstruct(1, config)
         self.cap = cv2.VideoCapture(0)
         self.setConfigDefault(config)
-        self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
+        # self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
+        self.imgBg = cv2.imread("./ref/background.jpg")
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
         self.imgAndBinTreshold = config['imgAndBinTreshold']
@@ -128,7 +129,7 @@ class camgrab:
             if self.cap != 0:
                 start = time.time()
                 success, self.frame = self.cap.read()
-                self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
+                # self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
                 self.success = success
                 if success == True and self.configFeedStatus == True:
                     self.success = False

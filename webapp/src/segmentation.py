@@ -220,7 +220,8 @@ def pseudoSkeleton(imgObj):
 
 
 def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
-    # h, s, v = imgHSV[:,:,0], imgHSV[:,:,1], imgHSV[:,:,2]
+    h, s, v = imgHSV[:,:,0], imgHSV[:,:,1], imgHSV[:,:,2]
+    # v = cv2.calcHist([s],[0],None,[256],[5,250])
     # Define thresholds for channel 1 based on histogram settings
     channel1Min = int(float(hue["min"]) * 360)
     channel1Max = int(float(hue["max"]) * 360)
@@ -231,7 +232,7 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
 
     # Define thresholds for channel 3 based on histogram settings
     channel3Min = int(float(value["min"]) * 255)
-    channel3Max = int(float(mathTools.otsu(imgHSV[:,:,2])) * 255)
+    channel3Max = int(float(value["max"]) * 255)
 
     imgShadowOnObj = np.zeros_like(imgObjColor)
     # hsv = cv2.cvtColor(imgObjColor, cv2.COLOR_BGR2HSV_FULL)
