@@ -57,6 +57,43 @@ def objShadow(imgSource, imgOpening):
     
     return imgInput, imgSegmentBlackColor, imgArrayROI, boudingRect
 
+# def obj(imgROI, imgHSV, hue, saturation, value):
+#     # Define thresholds for channel 1 based on histogram settings
+#     channel1Min = int(float(hue["min"]) * 360)
+#     channel1Max = int(float(hue["max"]) * 360)
+
+#     # Define thresholds for channel 2 based on histogram settings
+#     channel2Min = int(float(saturation["min"]) * 255)
+#     channel2Max = int(float(saturation["max"]) * 255)
+
+#     # Define thresholds for channel 3 based on histogram settings
+#     channel3Min = int(float(value["min"]) * 255)
+#     channel3Max = int(float(value["max"]) * 255)
+
+#     imgObj = np.zeros_like(imgROI)
+#     # imgHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+#     imgObj = cv2.inRange(
+#         imgHSV, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
+#     imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=2)
+#     # cv2.imshow("imgObj HUE Range", imgObj)
+#     contours, hierarchy = cv2.findContours(
+#         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+#     imgConvex = np.zeros_like(imgObj)
+#     if len(contours) != 0:
+#         # find the biggest area of the contour
+#         big_contour = max(contours, key=cv2.contourArea)
+#         # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+#         cnt = cv2.convexHull(big_contour)
+#         cv2.drawContours(imgConvex, [cnt], 0, (255, 255, 255), -1)
+#     # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+#     # masking process for image object with black backgroubd color
+#     imgMask = np.zeros_like(imgROI)
+#     imgMask[:, :, 0] = imgObj
+#     imgMask[:, :, 1] = imgObj
+#     imgMask[:, :, 2] = imgObj
+#     imgObjColor = cv2.bitwise_and(imgMask, imgROI)
+#     return imgConvex, imgObjColor
+
 def obj(imgROI, imgHSV, hue, saturation, value):
     # Define thresholds for channel 1 based on histogram settings
     channel1Min = int(float(hue["min"]) * 360)
@@ -86,14 +123,7 @@ def obj(imgROI, imgHSV, hue, saturation, value):
         cnt = cv2.convexHull(big_contour)
         cv2.drawContours(imgConvex, [cnt], 0, (255, 255, 255), -1)
     # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
-    # masking process for image object with black backgroubd color
-    imgMask = np.zeros_like(imgROI)
-    imgMask[:, :, 0] = imgObj
-    imgMask[:, :, 1] = imgObj
-    imgMask[:, :, 2] = imgObj
-    imgObjColor = cv2.bitwise_and(imgMask, imgROI)
-    return imgConvex, imgObjColor
-
+    return imgConvex, big_contour
 
 def shadow(imgROI, imgObj):
     imgShadow = np.zeros_like(imgObj)
@@ -159,64 +189,58 @@ def OpeningObj(img):
     return imgOpeninged
 
 
-def pseudoSkeleton(imgObj):
+def pseudoSkeleton(imgObj, big_contour):
     imgPseudoSkel = np.zeros_like(imgObj)
-    contours, hierarchy = cv2.findContours(
-        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
-    if len(contours) != 0:
-        # find the biggest area of the contour
-        big_contour = max(contours, key=cv2.contourArea)
-        cv2.drawContours(imgObj, [big_contour], 0, 255, -1)
 
-        # find centroid by image moment
-        M = cv2.moments(big_contour)
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])
-        # cv2.circle(imgOriginal, (cx, cy), 5, (255, 0, 0), -1)
+    # find centroid by image moment
+    M = cv2.moments(big_contour)
+    cx = int(M['m10']/M['m00'])
+    cy = int(M['m01']/M['m00'])
+    # cv2.circle(imgOriginal, (cx, cy), 5, (255, 0, 0), -1)
 
-        ellipse = cv2.fitEllipse(big_contour)
-        rect = cv2.minAreaRect(big_contour)
-        # calculate vertices point for ellipsoid
-        # first, calculate vector angle
-        ellipseVectorAngleX = (ellipse[1][1]/2) * \
-            math.cos(math.radians(90 - ellipse[2]))
-        ellipseVectorAngleY = (ellipse[1][1]/2) * \
-            math.sin(math.radians(90 - ellipse[2]))
-        # left side
-        ellipseVerticeLeftX = ellipse[0][0] - ellipseVectorAngleX
-        ellipseVerticeLeftY = ellipse[0][1] - ellipseVectorAngleY
-        # right side
-        ellipseVerticeRightX = ellipse[0][0] + ellipseVectorAngleX
-        ellipseVerticeRightY = ellipse[0][1] + ellipseVectorAngleY
-        # calculate vertices point for rectangle (in half length)
-        # first, calculate vector angle
-        rectVectorAngleX = (rect[1][1]/2) * \
-            math.cos(math.radians(90 - rect[2]))
-        rectVectorAngleY = (rect[1][1]/2) * \
-            math.sin(math.radians(90 - rect[2]))
-        # left side
-        rectHalfVerticesLeftX = rect[0][0] - rectVectorAngleX
-        rectHalfVerticesLeftY = rect[0][1] - rectVectorAngleY
-        # right side
-        rectHalfVerticesRightX = rect[0][0] + rectVectorAngleX
-        rectHalfVerticesRightY = rect[0][1] + rectVectorAngleY
+    ellipse = cv2.fitEllipse(big_contour)
+    rect = cv2.minAreaRect(big_contour)
+    # calculate vertices point for ellipsoid
+    # first, calculate vector angle
+    ellipseVectorAngleX = (ellipse[1][1]/2) * \
+        math.cos(math.radians(90 - ellipse[2]))
+    ellipseVectorAngleY = (ellipse[1][1]/2) * \
+        math.sin(math.radians(90 - ellipse[2]))
+    # left side
+    ellipseVerticeLeftX = ellipse[0][0] - ellipseVectorAngleX
+    ellipseVerticeLeftY = ellipse[0][1] - ellipseVectorAngleY
+    # right side
+    ellipseVerticeRightX = ellipse[0][0] + ellipseVectorAngleX
+    ellipseVerticeRightY = ellipse[0][1] + ellipseVectorAngleY
+    # calculate vertices point for rectangle (in half length)
+    # first, calculate vector angle
+    rectVectorAngleX = (rect[1][1]/2) * \
+        math.cos(math.radians(90 - rect[2]))
+    rectVectorAngleY = (rect[1][1]/2) * \
+        math.sin(math.radians(90 - rect[2]))
+    # left side
+    rectHalfVerticesLeftX = rect[0][0] - rectVectorAngleX
+    rectHalfVerticesLeftY = rect[0][1] - rectVectorAngleY
+    # right side
+    rectHalfVerticesRightX = rect[0][0] + rectVectorAngleX
+    rectHalfVerticesRightY = rect[0][1] + rectVectorAngleY
 
-        # cv2.ellipse(imgOriginal, ellipse, (255, 0, 0), 1)
-        # cv2.circle(imgOriginal, (int(ellipseVerticeLeftX), int(ellipseVerticeLeftY)),
-        #            5, (255, 0, 0), -1)
-        # cv2.circle(imgOriginal, (int(rectHalfVerticesLeftX), int(rectHalfVerticesLeftY)),
-        #            5, (255, 0, 0), -1)
-        # # draw rectangle
-        # imgOriginal = draw_angled_rec(
-        #     rect[0][0], rect[0][1], rect[1][1], rect[1][0], rect[2], imgOriginal)
+    # cv2.ellipse(imgOriginal, ellipse, (255, 0, 0), 1)
+    # cv2.circle(imgOriginal, (int(ellipseVerticeLeftX), int(ellipseVerticeLeftY)),
+    #            5, (255, 0, 0), -1)
+    # cv2.circle(imgOriginal, (int(rectHalfVerticesLeftX), int(rectHalfVerticesLeftY)),
+    #            5, (255, 0, 0), -1)
+    # # draw rectangle
+    # imgOriginal = draw_angled_rec(
+    #     rect[0][0], rect[0][1], rect[1][1], rect[1][0], rect[2], imgOriginal)
 
-        posOrigin = [rectHalfVerticesLeftX, rectHalfVerticesLeftY]
-        posDestination = [rectHalfVerticesRightX, rectHalfVerticesRightY]
-        pos_1 = (int(rectHalfVerticesLeftX), int(rectHalfVerticesLeftY))
-        pos_2 = (int(rectHalfVerticesRightX), int(rectHalfVerticesRightY))
-        imgPseudoSkel = cv2.line(
-            imgPseudoSkel, pos_1, pos_2, (255), 1)
-        return posOrigin, posDestination, imgPseudoSkel
+    posOrigin = [rectHalfVerticesLeftX, rectHalfVerticesLeftY]
+    posDestination = [rectHalfVerticesRightX, rectHalfVerticesRightY]
+    pos_1 = (int(rectHalfVerticesLeftX), int(rectHalfVerticesLeftY))
+    pos_2 = (int(rectHalfVerticesRightX), int(rectHalfVerticesRightY))
+    imgPseudoSkel = cv2.line(
+        imgPseudoSkel, pos_1, pos_2, (255), 1)
+    return posOrigin, posDestination, imgPseudoSkel
 
 
 def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
