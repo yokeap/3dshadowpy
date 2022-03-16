@@ -38,6 +38,14 @@ def process_imgObjColor(imgROI):
     imgObj, imgObjColor = segmentation.obj(imgROI, imageHSV, config["obj"]["hue"], config["obj"]["saturation"],config["obj"]["value"])
     return imgObj, imgObjColor
 
+def process_imgObj(imgROI):
+    imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+    imgObj= segmentation.obj(imgROI, imageHSV, config["obj"]["hue"], config["obj"]["saturation"],config["obj"]["value"])
+    # posOrigin, posDestination, imgPseudoSkel = segmentation.pseudoSkeleton(imgROI, skeleton)
+    # print("pos origin = ", posOrigin)
+    # print("pos destination = ", posDestination)
+    return imgObj
+
 def process_imgShadowOnObj(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
     h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
@@ -107,23 +115,23 @@ imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(fram
 cv2.imshow("Image ROI", imgROI[0])
 cv2.imwrite('./imageroi.jpg', imgROI[0])
 
-imgObj, imgObjColor = process_imgObjColor(imgROI[0])
+imgObj, imgSkeleton= process_imgObj(imgROI[0])
 cv2.imshow("Image Obj", imgObj)
-cv2.imshow("Image Object Color", imgObjColor)
-# imgShadow = segmentation.shadow(imgROI[0], imgObj)
-# cv2.imshow("Shadow", imgShadow)
+cv2.imshow("Image Skeleton", imgSkeleton)
+imgShadow = segmentation.shadow(imgROI[0], imgObj)
+cv2.imshow("Shadow", imgShadow)
 # imgShadowOnObj = process_imgShadowOnObj(imgObjColor)
 # cv2.imshow("Image Shadow on Object", imgShadowOnObj)
 
-# objReconstruct.reconstruct(frame, imgObj, imgShadowOnObj, imgShadow, posCrop)
-# ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)
+objReconstruct.reconstruct(frame, imgObj, imgSkeleton, imgShadow, posCrop)
+ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)
 
-# # objReconstruct.pointCloudChart_3d()
+# objReconstruct.pointCloudChart_3d()
 
 end = time.time()
 print("processed time = ", (end - start), "s")
 
-# objReconstruct.volumeChart(end - start)
+objReconstruct.volumeChart(end - start)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
