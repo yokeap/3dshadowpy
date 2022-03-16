@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import math
 from . import mathTools
+from skimage import img_as_ubyte
+from skimage.morphology import skeletonize, thin
 
 debug = True
 
@@ -114,16 +116,22 @@ def obj(imgROI, imgHSV, hue, saturation, value):
     imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=2)
     # cv2.imshow("imgObj HUE Range", imgObj)
     contours, hierarchy = cv2.findContours(
-        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     imgConvex = np.zeros_like(imgObj)
-    if len(contours) != 0:
+    # height, width = imgObj.shape
+    # imgConvex = np.zeros((height, width, 1), np.uint8)
+    # if len(contours) != 0:
         # find the biggest area of the contour
-        big_contour = max(contours, key=cv2.contourArea)
+    big_contour = max(contours, key=cv2.contourArea)
         # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
-        cnt = cv2.convexHull(big_contour)
-        cv2.drawContours(imgConvex, [cnt], 0, (255, 255, 255), -1)
-    # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
-    return imgConvex, big_contour
+    cnt = cv2.convexHull(big_contour)
+    cv2.drawContours(imgConvex, [cnt], 0, 255, -1)
+    imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+    # skeleton = thin(imgConvex)
+    # skeleton = skeletonize(imgConvex, method='lee')
+    # imgSkeleton = img_as_ubyte(skeleton)
+    imgSkeleton = skeleton(imgConvex)
+    return imgConvex, imgSkeleton
 
 def shadow(imgROI, imgObj):
     imgShadow = np.zeros_like(imgObj)
@@ -190,7 +198,7 @@ def OpeningObj(img):
 
 
 def pseudoSkeleton(imgObj, big_contour):
-    imgPseudoSkel = np.zeros_like(imgObj)
+    imgPseudoSkel = imgObj
 
     # find centroid by image moment
     M = cv2.moments(big_contour)
@@ -242,6 +250,31 @@ def pseudoSkeleton(imgObj, big_contour):
         imgPseudoSkel, pos_1, pos_2, (255), 1)
     return posOrigin, posDestination, imgPseudoSkel
 
+def skeleton(imgBin):
+    element = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 3))
+    done = False
+    size = np.size(imgBin)
+    skel = np.zeros_like(imgBin)
+    eroded = np.zeros_like(imgBin)
+    temp = np.zeros_like(imgBin)
+    imgOriginal = imgBin.copy()
+    while(not done):
+        # eroded = cv2.erode(imgOriginal, element)
+        # temp = cv2.dilate(eroded, element)
+        # temp = cv2.subtract(imgOriginal, temp)
+        # skel = cv2.bitwise_or(skel, temp)
+        # imgOriginal, eroded = eroded, imgOriginal
+        cv2.erode(imgOriginal, element, eroded)
+        cv2.dilate(eroded, element, temp)
+        cv2.subtract(imgOriginal, temp, temp)
+        cv2.bitwise_or(skel, temp, skel)
+        imgOriginal, eroded = eroded, imgOriginal
+
+        # zeros = size - cv2.countNonZero(imgBin)
+        # if zeros == size:
+        #     done = True
+        if cv2.countNonZero(imgOriginal) == 0:
+            return skel
 
 def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
     h, s, v = imgHSV[:,:,0], imgHSV[:,:,1], imgHSV[:,:,2]
