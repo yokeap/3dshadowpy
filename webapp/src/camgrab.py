@@ -42,7 +42,7 @@ class camgrab:
         # for test with fish
         self.objReconstruct = reconstruct.reconstruct(1, config)
         self.cap = cv2.VideoCapture(0)
-        self.setConfigDefault(config)
+        self.setConfig(config)
         # self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
         self.imgBg = cv2.imread("./ref/background.jpg")
         self.feedStatus = "rawImage"
@@ -99,6 +99,10 @@ class camgrab:
     def setConfig(self, config):
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, config['width'])
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
+        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
+        self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
         self.cap.set(cv2.CAP_PROP_CONTRAST, config['contrast'])
@@ -115,11 +119,11 @@ class camgrab:
         loadConfig = {}
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
-        loadConfig['exposure'] = self.cap.get(cv2.CAP_PROP_EXPOSURE) - 1
+        loadConfig['exposure'] = self.cap.get(cv2.CAP_PROP_EXPOSURE) 
         loadConfig['brightness'] = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
         loadConfig['contrast'] = self.cap.get(cv2.CAP_PROP_CONTRAST)
         loadConfig['hue'] = self.cap.get(cv2.CAP_PROP_HUE)
-        loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION) + 64
+        loadConfig['saturation'] = self.cap.get(cv2.CAP_PROP_SATURATION)
         loadConfig['sharpness'] = self.cap.get(cv2.CAP_PROP_SHARPNESS)
         return loadConfig
 
@@ -172,7 +176,7 @@ class camgrab:
                         self.frame, self.imgOpening)
                     segmentSourceFeed.put(self.imgSegmentSource)
                     try:
-                        self.imgObj, self.imgSkeleton = self.process_imgObjColor(self.imgROI[0])
+                        self.imgObj, self.imgSkeleton = self.process_imgObj(self.imgROI[0])
                         queueROIFeed.put(self.imgObj)
                         queueShadowOnObjFeed.put(self.imgSkeleton)
                         self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
@@ -182,7 +186,7 @@ class camgrab:
                         self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgSkeleton, self.imgShadow, self.posCrop )
                         ptCloud, volume, length = self.objReconstruct.reconstructVolume(0.05)
                         end = time.time()
-                        # print("processed time = ", (end - start), "s")
+                        print("processed time = ", (end - start), "s")
                         if self.socketConnectStatus == True:
                             self.objJson = {
                                 "ptCloud" : {
@@ -224,6 +228,24 @@ class camgrab:
             self.socket.emit('hsv-obj-data', json.dumps(objJson))
         imgObj, imgObjColor = segmentation.obj(imgROI, imageHSV, self.objHue, self.objSaturation, self.objValue)
         return imgObj, imgObjColor
+
+    def process_imgObj(self, imgROI):
+        objJson = {}
+        imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+        h, s, v = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+        h = np.transpose(cv2.calcHist([h],[0],None,[360],[0,360]))
+        s = np.transpose(cv2.calcHist([s],[0],None,[256],[0,256]))
+        v = np.transpose(cv2.calcHist([v],[0],None,[256],[0,256]))
+        objJson['hist_h'] = h.tolist()
+        objJson['hist_h_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        objJson['hist_s'] = s.tolist()
+        objJson['hist_s_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        objJson['hist_v'] = v.tolist()
+        objJson['hist_v_ymax'] = (np.mean(h) + 0.5 * np.std(h)).tolist()
+        if self.socketConnectStatus == True:
+            self.socket.emit('hsv-obj-data', json.dumps(objJson))
+        imgObj, imgSkeleton = segmentation.obj(imgROI, imageHSV, self.objHue, self.objSaturation, self.objValue)
+        return imgObj, imgSkeleton
 
     def process_imgShadowOnObj(self, imgROI):
         shadowJson = {}
