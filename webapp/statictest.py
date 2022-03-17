@@ -40,11 +40,11 @@ def process_imgObjColor(imgROI):
 
 def process_imgObj(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
-    imgObj= segmentation.obj(imgROI, imageHSV, config["obj"]["hue"], config["obj"]["saturation"],config["obj"]["value"])
+    imgObj, imgSkeleton = segmentation.obj(imgROI, imageHSV, config["obj"]["hue"], config["obj"]["saturation"],config["obj"]["value"])
     # posOrigin, posDestination, imgPseudoSkel = segmentation.pseudoSkeleton(imgROI, skeleton)
     # print("pos origin = ", posOrigin)
     # print("pos destination = ", posDestination)
-    return imgObj
+    return imgObj, imgSkeleton
 
 def process_imgShadowOnObj(imgROI):
     imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
