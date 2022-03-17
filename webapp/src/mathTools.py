@@ -22,9 +22,9 @@ def splineEstimate(xy, splineResolution):
     knots = xy
     originalSpacing = np.arange(1, numberOrPoints + 1)
     finerSpacing = np.arange(1, numberOrPoints, splineResolution)
-    splines = interpolate.splrep(originalSpacing, knots[0], k=3)
+    splines = interpolate.splrep(originalSpacing, knots[0], k=2)
     splinesX = interpolate.splev(finerSpacing, splines)
-    splines = interpolate.splrep(originalSpacing, knots[1], k=3)
+    splines = interpolate.splrep(originalSpacing, knots[1], k=2)
     splinesY = interpolate.splev(finerSpacing, splines)
     # must be swap Y before X
     splinesXY = [splinesX.tolist(), splinesY.tolist()]
