@@ -44,7 +44,7 @@ class camgrab:
         self.cap = cv2.VideoCapture(0)
         self.setConfig(config)
         # self.imgBg = cv2.fastNlMeansDenoisingColored(cv2.imread("./ref/background.jpg"), h =2)
-        self.imgBg = cv2.imread("./ref/background.jpg")
+        self.imgBg = cv2.cvtColor(cv2.imread("./ref/background.jpg"), cv2.COLOR_BGR2GRAY)
         self.feedStatus = "rawImage"
         self.imgDiffBinTreshold = config["imgDiffBinTreshold"]
         self.imgAndBinTreshold = config['imgAndBinTreshold']
@@ -133,80 +133,89 @@ class camgrab:
             if self.cap != 0:
                 start = time.time()
                 success, self.frame = self.cap.read()
+                # self.frame = cv2.GaussianBlur(self.frame,(5,5),0)
                 # self.frame = cv2.fastNlMeansDenoisingColored(self.frame, h=2)
-                self.success = success
-                if success == True and self.configFeedStatus == True:
-                    self.success = False
-                    queueRawFeed.put(self.frame)
-                if success == True and self.socketConnectStatus == True and self.feedStatus != "freeze":
-                    # for test with fish
-                    # self.imgBg = cv2.imread('../sample-image/bg-1.JPG')
-                    # self.frame = cv2.imread('../sample-image/fish-1.JPG')
-                    # height, width, channels = self.frame.shape
-                    # height = int(height * 0.2)
-                    # width = int(width * 0.2)
-                    # self.imgBg = cv2.resize(self.imgBg, (width, height))
-                    # self.frame = cv2.resize(self.frame, (width, height))
+                try:
+                    self.success = success
+                    if success == True and self.configFeedStatus == True:
+                        self.success = False
+                        queueRawFeed.put(self.frame)
+                    if success == True and self.socketConnectStatus == True and self.feedStatus != "freeze":
+                        # for test with fish
+                        # self.imgBg = cv2.imread('../sample-image/bg-1.JPG')
+                        # self.frame = cv2.imread('../sample-image/fish-1.JPG')
+                        # height, width, channels = self.frame.shape
+                        # height = int(height * 0.2)
+                        # width = int(width * 0.2)
+                        # self.imgBg = cv2.resize(self.imgBg, (width, height))
+                        # self.frame = cv2.resize(self.frame, (width, height))
 
-                    # print("Fire")
-                    # start timer
-                    # start = time.time()
-                    self.success = False
-                    self.rawframe = self.frame.copy()
-                    queueRawFeed.put(self.frame)
-                    self.diffImage = cv2.cvtColor(
-                        self.frame, cv2.COLOR_BGR2GRAY) - cv2.cvtColor(self.imgBg, cv2.COLOR_BGR2GRAY)
-                    ret, self.imgDiffBin = cv2.threshold(
-                        self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
-                    queueSubBackground.put(self.diffImage)
-                    self.imgAnd = cv2.bitwise_and(
-                        self.imgDiffBin, self.diffImage)
-                    ret, self.imgBin = cv2.threshold(
-                        self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
-                    queueImgAndFeed.put(self.imgBin)
-                    self.imgOpening = cv2.morphologyEx(
-                        self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
-                    try:
-                        self.imgOpening = cv2.medianBlur(
-                            self.imgOpening, self.medianBlur)
-                    except Exception as e:
+                        # print("Fire")
+                        # start timer
+                        # start = time.time()
+                        self.success = False
+                        self.rawframe = self.frame.copy()
+                        queueRawFeed.put(self.frame)
+                        self.diffImage = cv2.absdiff(cv2.cvtColor(self.frame, cv2.COLOR_BGR2GRAY), self.imgBg)
+                        ret, self.imgDiffBin = cv2.threshold(
+                            self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY)
+                        self.imgDiffMorphBin = cv2.morphologyEx(
+                            self.imgDiffBin, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT,(7,7)))
+                        # ret, self.imgDiffBin = cv2.threshold(
+                        #     self.diffImage, self.imgDiffBinTreshold, 255, cv2.THRESH_BINARY_INV)
+                        # queueSubBackground.put(self.diffImage)
+                        # self.imgAnd = cv2.bitwise_and(
+                        #     self.imgDiffBin, self.diffImage)
+                        # ret, self.imgBin = cv2.threshold(
+                        #     self.imgAnd, self.imgAndBinTreshold, 255, cv2.THRESH_BINARY)
+                        # queueImgAndFeed.put(self.imgBin)
+                        # self.imgOpening = cv2.morphologyEx(
+                        #     self.imgBin, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8))
+                        # try:
+                        #     self.imgOpening = cv2.medianBlur(
+                        #         self.imgOpening, self.medianBlur)
+                        # except Exception as e:
+                        #     pass
+                        queueMorphFeed.put(self.imgDiffMorphBin)
+                        # self.imgSegmentSource, self.imgSegmentBlack, self.imgROI, self.posCrop = segmentation.objShadow(
+                        #     self.frame, self.imgDiffMorphBin)
+                        self.imgROI, self.posCrop = segmentation.singleObjShadow(self.frame, self.imgDiffMorphBin )
+                        segmentSourceFeed.put(self.frame)
+                        try:
+                            self.imgObj, self.imgSkeleton = self.process_imgObj(self.imgROI[0])
+                            queueROIFeed.put(self.imgObj)
+                            queueShadowOnObjFeed.put(self.imgSkeleton)
+                            self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
+                            queueShadow.put(self.imgShadow)
+                            # self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
+                            # queueShadowOnObjFeed.put(self.imgShadowOnObj)
+                            self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgSkeleton, self.imgShadow, self.posCrop )
+                            ptCloud, volume, length = self.objReconstruct.reconstructVolume(0.05)
+                            end = time.time()
+                            print("processed time = ", (end - start), "s")
+                            if self.socketConnectStatus == True:
+                                self.objJson = {
+                                    "ptCloud" : {
+                                        "x": ptCloud[:, 0].tolist(),
+                                        "y": ptCloud[:, 1].tolist(),
+                                        "z": ptCloud[:, 2].tolist(),
+                                    },
+                                    "volume": volume,
+                                    "length": length,
+                                    "computeTime": (end - start)
+                                }
+                                self.socket.emit('reconstruction-data', json.dumps(self.objJson))
+                                # self.objReconstruct.volumeChart(end - start)
+                        except Exception as e:
+                            print(e)
+                            queueROIFeed.put(np.zeros_like(self.frame))
+                            queueShadow.put(np.zeros_like(self.frame))
+                            queueShadowOnObjFeed.put(np.zeros_like(self.frame))
+                            pass
+                    else:
                         pass
-                    queueMorphFeed.put(self.imgOpening)
-                    self.imgSegmentSource, self.imgSegmentBlack, self.imgROI, self.posCrop = segmentation.objShadow(
-                        self.frame, self.imgOpening)
-                    segmentSourceFeed.put(self.imgSegmentSource)
-                    try:
-                        self.imgObj, self.imgSkeleton = self.process_imgObj(self.imgROI[0])
-                        queueROIFeed.put(self.imgObj)
-                        queueShadowOnObjFeed.put(self.imgSkeleton)
-                        self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
-                        queueShadow.put(self.imgShadow)
-                        # self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
-                        # queueShadowOnObjFeed.put(self.imgShadowOnObj)
-                        self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgSkeleton, self.imgShadow, self.posCrop )
-                        ptCloud, volume, length = self.objReconstruct.reconstructVolume(0.05)
-                        end = time.time()
-                        print("processed time = ", (end - start), "s")
-                        if self.socketConnectStatus == True:
-                            self.objJson = {
-                                "ptCloud" : {
-                                    "x": ptCloud[:, 0].tolist(),
-                                    "y": ptCloud[:, 1].tolist(),
-                                    "z": ptCloud[:, 2].tolist(),
-                                },
-                                "volume": volume,
-                                "length": length,
-                                "computeTime": (end - start)
-                            }
-                            self.socket.emit('reconstruction-data', json.dumps(self.objJson))
-                            # self.objReconstruct.volumeChart(end - start)
-                    except Exception as e:
-                        print(e)
-                        queueROIFeed.put(np.zeros_like(self.frame))
-                        queueShadow.put(np.zeros_like(self.frame))
-                        queueShadowOnObjFeed.put(np.zeros_like(self.frame))
-                        pass
-                else:
+                except Exception as e:
+                    print(e)
                     pass
             else:
                 pass
