@@ -190,8 +190,8 @@ def fedd_status_handle(jsonData):
 def process_value_handle(jsonData):
     pyObj = json.loads(jsonData)
     camera.imgDiffBinTreshold = int(pyObj['subtractTreshVal'])
-    camera.imgAndBinTreshold = int(pyObj['imgAndBinTreshold'])
-    camera.medianBlur = int(pyObj['medianBlur'])
+    camera.imgAndBinTreshold = int(pyObj['imgAndTreshVal'])
+    camera.medianBlur = int(pyObj['medBlurVal'])
     config['imgDiffBinTreshold']
     config['imgDiffBinTreshold']
     config['medianBlur']
