@@ -4,6 +4,7 @@ import numpy as np
 from skimage.morphology import skeletonize, convex_hull_image
 from skimage.filters import threshold_otsu
 from skimage import measure
+from app import imgroi
 from src import mathTools
 from src import segmentation
 from src import reconstruct
@@ -23,9 +24,9 @@ with open('./config.json', 'r') as f:
     config = json.load(f)
 
 objReconstruct = reconstruct.reconstruct(1, config)
-imgBg = cv2.GaussianBlur(cv2.imread("./ref/background.jpg"),(5,5),0)
+imgBg = cv2.imread("./ref/background.jpg")
 cv2.imshow("Background Image", imgBg)
-frame = cv2.GaussianBlur(cv2.imread("./shots/obj.jpg"),(5,5),0)
+frame = cv2.imread("./shots/obj.jpg")
 cv2.imshow("Input Image", frame)
 
 imgBg = cv2.cvtColor(imgBg, cv2.COLOR_BGR2GRAY)
@@ -100,18 +101,21 @@ def otsu(hist_channel):
 
 start = time.time()
 
-diffImage = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) - imgBg
+diffImage = cv2.absdiff(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), imgBg)
 cv2.imshow("Diff Image", diffImage)
-ret, imgDiffBin = cv2.threshold(diffImage, 232, 255, cv2.THRESH_BINARY_INV)
+ret, imgDiffBin = cv2.threshold(diffImage, 5, 255, cv2.THRESH_BINARY)
 cv2.imshow("Diff Image Thresholded", imgDiffBin)
-imgAnd = cv2.bitwise_and(imgDiffBin, diffImage)
-ret, imgBin = cv2.threshold(imgAnd, 130, 255, cv2.THRESH_BINARY)
-cv2.imshow("Image And Thresholded", imgBin)
-imgClose = cv2.morphologyEx(imgBin, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=2)
-cv2.imshow("Image Closing", imgClose)
+imgDiffMorphBin = cv2.morphologyEx(imgDiffBin, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT,(7,7)))
+cv2.imshow("Image Closing", imgDiffMorphBin)
+# imgAnd = cv2.bitwise_and(imgDiffMorphBin, diffImage)
+# ret, imgBin = cv2.threshold(imgAnd, 130, 255, cv2.THRESH_BINARY)
+# cv2.imshow("Image And Thresholded", imgAnd)
+# imgClose = cv2.morphologyEx(imgBin, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8), iterations=2)
+# cv2.imshow("Image Closing", imgClose)
 
 
-imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(frame, imgClose)
+# imgSegmentSource, imgSegmentBlack, imgROI, posCrop = segmentation.objShadow(frame, imgDiffMorphBin )
+imgROI, posCrop = segmentation.singleObjShadow(frame, imgDiffMorphBin )
 cv2.imshow("Image ROI", imgROI[0])
 cv2.imwrite('./imageroi.jpg', imgROI[0])
 
@@ -126,7 +130,7 @@ cv2.imshow("Shadow", imgShadow)
 objReconstruct.reconstruct(frame, imgObj, imgSkeleton, imgShadow, posCrop)
 ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)
 
-# objReconstruct.pointCloudChart_3d()
+# # objReconstruct.pointCloudChart_3d()
 
 end = time.time()
 print("processed time = ", (end - start), "s")
