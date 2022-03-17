@@ -59,6 +59,41 @@ def objShadow(imgSource, imgOpening):
     
     return imgInput, imgSegmentBlackColor, imgArrayROI, boudingRect
 
+def singleObjShadow(imgSource, imgOpening):
+    x = 0
+    y = 0
+    w = 0
+    h = 0
+    margin = 60
+    boudingRect = []
+    imgArrayROI = []
+
+    imgInput = imgSource
+
+    imgMaskRGB = np.zeros_like(imgInput)
+    imgMaskRGB[:, :, 0] = imgOpening
+    imgMaskRGB[:, :, 1] = imgOpening
+    imgMaskRGB[:, :, 2] = imgOpening
+
+    imgSegmentBlackColor = cv2.bitwise_and(imgInput, imgMaskRGB)
+
+    contours, hierarchy = cv2.findContours(
+        imgOpening, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+    big_contour = max(contours, key=cv2.contourArea)
+
+    (x, y, w, h) = cv2.boundingRect(big_contour)
+    OriginX = x - round(margin / 2)
+    OriginY = y - round(margin / 2)
+    Width = w + margin
+    Height = h + margin
+    # cv2.rectangle(imgContour, (x, y), (x+w, y+h), (0, 255, 0), 2)
+    boudingRect.append([OriginX, OriginY, Width, Height])
+    cv2.rectangle(imgInput, (OriginX, OriginY), (x + Width, y + Height), (255, 255, 255), 2)
+    imgArrayROI.append(imgSegmentBlackColor[OriginY:OriginY + Height, OriginX:OriginX + Width])
+    
+    return imgArrayROI, boudingRect
+
 # def obj(imgROI, imgHSV, hue, saturation, value):
 #     # Define thresholds for channel 1 based on histogram settings
 #     channel1Min = int(float(hue["min"]) * 360)
