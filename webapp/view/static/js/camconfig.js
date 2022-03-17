@@ -96,8 +96,8 @@
 
     function saveConfig(){
         var jsonConfig = {
-            "width": 1600,
-            "height": 1200,
+            "width": 1280,
+            "height": 1024,
             "exposure": parseInt(exposure.value),
             "brightness": parseInt(brightness.value),
             "contrast": parseInt(contrast.value),
