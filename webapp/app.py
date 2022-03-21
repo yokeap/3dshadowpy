@@ -40,6 +40,7 @@ def send_data():
 @app.route('/')
 def index():
     # bar = create_plot()
+    camera.setConfig(config)
     return render_template('index.html')
 
 @app.route('/config', methods=['POST', 'GET'])
@@ -52,10 +53,21 @@ def configHandler():
         print(jsonData)
         if jsonData["browserEvent"] == "capture":
             camera.shotSetting()
+            config['width'] = camera.cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            config['height'] = camera.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            config['exposure'] = camera.cap.get(cv2.CAP_PROP_EXPOSURE)
+            config['brightness'] = camera.cap.get(cv2.CAP_PROP_BRIGHTNESS)
+            config['contrast'] = camera.cap.get(cv2.CAP_PROP_CONTRAST)
+            config['hue'] = camera.cap.get(cv2.CAP_PROP_HUE)
+            config['saturation'] = camera.cap.get(cv2.CAP_PROP_SATURATION)
+            config['sharpness'] = camera.cap.get(cv2.CAP_PROP_SHARPNESS)
+            print("all of config has been saved")
+            with open('./ref/config.json', 'w') as f:
+                json.dump(config, f)
             result['message'] = "success"
             return jsonify(result['message'])
         elif jsonData["browserEvent"] == "config-load":
-            camera.setConfigDefault(config["default"])
+            camera.setConfig(config)
             return jsonify(config["default"])
         elif jsonData["browserEvent"] == "loaded":
             # camera.gen_frames()
@@ -69,7 +81,7 @@ def configHandler():
             camera.cap.set(cv2.CAP_PROP_BRIGHTNESS, jsonData['brightness'])
             camera.cap.set(cv2.CAP_PROP_CONTRAST, jsonData['contrast'])
             camera.cap.set(cv2.CAP_PROP_HUE, jsonData['hue'])
-            camera.cap.set(cv2.CAP_PROP_SATURATION, jsonData['saturation'])
+            # camera.cap.set(cv2.CAP_PROP_SATURATION, jsonData['saturation'])
             camera.cap.set(cv2.CAP_PROP_SHARPNESS, jsonData['sharpness'])
             result['message'] = "success"
             return jsonify(result['message'])
@@ -90,6 +102,7 @@ def saveHandler():
         with open('./config.json', 'w') as f:
             json.dump(merge(config, jsonData), f)
         result['message'] = "success"
+        print("config has been saved")
         return jsonify(result['message'])
 
     elif request.method == 'GET':
