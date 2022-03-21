@@ -146,7 +146,7 @@
         saturationText.value = saturation.value
         sharpnessText.value = sharpness.value
         jsonData.browserEvent = "loaded";
-        postjsonServ("/config", jsonData);
+        // postjsonServ("/config", jsonData);
         jsonData.browserEvent = "normal";
     })
     
