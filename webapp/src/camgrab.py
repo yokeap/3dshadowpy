@@ -87,13 +87,13 @@ class camgrab:
             raise IOError("Cannot open webcam")
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, config['width'])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
-        self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
+        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
+        # self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
         self.cap.set(cv2.CAP_PROP_CONTRAST, config['contrast'])
         self.cap.set(cv2.CAP_PROP_HUE, config['hue'])
-        self.cap.set(cv2.CAP_PROP_SATURATION, config['saturation'])
+        # self.cap.set(cv2.CAP_PROP_SATURATION, config['saturation'])
         self.cap.set(cv2.CAP_PROP_SHARPNESS, config['sharpness'])
 
     def setConfig(self, config):
@@ -101,13 +101,13 @@ class camgrab:
             raise IOError("Cannot open webcam")
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, config['width'])
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config['height'])
-        self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
-        self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
+        # self.cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, -1)  # manual mode
+        # self.cap.set(cv2.CAP_PROP_AUTO_WB, 1)  # manual mode
         self.cap.set(cv2.CAP_PROP_EXPOSURE, config['exposure'])
         self.cap.set(cv2.CAP_PROP_BRIGHTNESS, config['brightness'])
         self.cap.set(cv2.CAP_PROP_CONTRAST, config['contrast'])
         self.cap.set(cv2.CAP_PROP_HUE, config['hue'])
-        self.cap.set(cv2.CAP_PROP_SATURATION, config['saturation'])
+        self.cap.set(cv2.CAP_PROP_SATURATION, 100)
         self.cap.set(cv2.CAP_PROP_SHARPNESS, config['sharpness'])
 
     def setInitParams(self, config):
@@ -119,7 +119,7 @@ class camgrab:
         loadConfig = {}
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
-        loadConfig['exposure'] = self.cap.get(cv2.CAP_PROP_EXPOSURE) 
+        loadConfig['exposure'] = self.cap.get(cv2.CAP_PROP_EXPOSURE) - 1
         loadConfig['brightness'] = self.cap.get(cv2.CAP_PROP_BRIGHTNESS)
         loadConfig['contrast'] = self.cap.get(cv2.CAP_PROP_CONTRAST)
         loadConfig['hue'] = self.cap.get(cv2.CAP_PROP_HUE)
@@ -182,11 +182,15 @@ class camgrab:
                         self.imgROI, self.posCrop = segmentation.singleObjShadow(self.frame, self.imgDiffMorphBin )
                         segmentSourceFeed.put(self.frame)
                         try:
-                            self.imgObj, self.imgSkeleton = self.process_imgObj(self.imgROI[0])
+                            # self.imgObj, self.imgSkeleton = self.process_imgObj(self.imgROI[0])
+                            # queueROIFeed.put(self.imgObj)
+                            # queueShadowOnObjFeed.put(self.imgSkeleton)
+                            # self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
+                            # queueShadow.put(self.imgShadow)
+                            self.imgObj, self.imgShadow, self.imgSkeleton = segmentation.obj_shadow_skeleton(self.imgROI[0])
                             queueROIFeed.put(self.imgObj)
-                            queueShadowOnObjFeed.put(self.imgSkeleton)
-                            self.imgShadow = segmentation.shadow(self.imgROI[0], self.imgObj)
                             queueShadow.put(self.imgShadow)
+                            queueShadowOnObjFeed.put(self.imgSkeleton)
                             # self.imgShadowOnObj = self.process_imgShadowOnObj(self.imgObjColor)
                             # queueShadowOnObjFeed.put(self.imgShadowOnObj)
                             self.objReconstruct.reconstruct(self.frame, self.imgObj, self.imgSkeleton, self.imgShadow, self.posCrop )
@@ -348,8 +352,9 @@ class camgrab:
         if not self.cap.isOpened():
             raise IOError("Cannot open webcam")
         now = datetime.datetime.now()
-        p = os.path.sep.join(
-            ['shots', "shot_{}.jpg".format(str(now).replace(":", ''))])
+        # p = os.path.sep.join(
+        #     ['ref', "shot_{}.jpg".format(str(now).replace(":", ''))])
+        p = os.path.sep.join(['ref', "background.jpg"])
         cv2.imwrite(p, self.frame)
 
     def captureAll(self):
@@ -366,15 +371,13 @@ class camgrab:
         print(p)
         cv2.imwrite(os.path.join(p, "imgraw.jpg"), self.rawframe)
         cv2.imwrite(os.path.join(p, "imgdiff.jpg"), self.diffImage)
-        cv2.imwrite(os.path.join(p, "imgAnd.jpg"), self.imgAnd)
-        cv2.imwrite(os.path.join(p, "imgBin.jpg"), self.imgBin)
-        cv2.imwrite(os.path.join(p, "imgopening.jpg"), self.imgOpening)
-        cv2.imwrite(os.path.join(p, "imgsegment.jpg"), self.imgSegmentBlack)
+        cv2.imwrite(os.path.join(p, "imgDiffBin.jpg"), self.imgDiffBin)
+        cv2.imwrite(os.path.join(p, "imgDiffMorphBin.jpg"), self.imgDiffMorphBin)
         try:
-            cv2.imwrite(os.path.join(p, "imgroi.jpg"), self.imgROI[0])
-            cv2.imwrite(os.path.join(p, "imgObjColor.jpg"), self.imgObjColor)
-            cv2.imwrite(os.path.join(p, "imgShadow.jpg"), self.imgShadow)
-            cv2.imwrite(os.path.join(p, "imgShadowOnObj.jpg"), self.imgShadowOnObj)
+            cv2.imwrite(os.path.join(p, "imgRoi.jpg"), self.imgROI[0])
+            cv2.imwrite(os.path.join(p, "imgObj.jpg"), self.imgObj)
+            cv2.imwrite(os.path.join(p, "imgSkeleton.jpg"), self.imgSkeleton)
+            cv2.imwrite(os.path.join(p, "imgShadow.jpg"), self.imgShadow)            
             with open(os.path.join(p, "reconstruct.json"), 'w') as f:
                 json.dump(self.objJson, f)
         except:
