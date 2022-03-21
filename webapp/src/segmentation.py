@@ -1,3 +1,4 @@
+from urllib.parse import scheme_chars
 import cv2
 import numpy as np
 import math
@@ -131,42 +132,51 @@ def singleObjShadow(imgSource, imgOpening):
 #     imgObjColor = cv2.bitwise_and(imgMask, imgROI)
 #     return imgConvex, imgObjColor
 
-def obj(imgROI, imgHSV, hue, saturation, value):
-    # Define thresholds for channel 1 based on histogram settings
-    channel1Min = int(float(hue["min"]) * 360)
-    channel1Max = int(float(hue["max"]) * 360)
+# def obj(imgROI, imgHSV, hue, saturation, value):
+#     # Define thresholds for channel 1 based on histogram settings
+#     channel1Min = int(float(hue["min"]) * 360)
+#     channel1Max = int(float(hue["max"]) * 360)
 
-    # Define thresholds for channel 2 based on histogram settings
-    channel2Min = int(float(saturation["min"]) * 255)
-    channel2Max = int(float(saturation["max"]) * 255)
+#     # Define thresholds for channel 2 based on histogram settings
+#     # channel2Min = int(float(saturation["min"]) * 255)
+#     mean,std = cv2.meanStdDev(imgHSV[:,:,1]) 
+#     channel2Min = abs(mean + (std*1))[0][0]
+#     channel2Max = int(float(saturation["max"]) * 255)
 
-    # Define thresholds for channel 3 based on histogram settings
-    channel3Min = int(float(value["min"]) * 255)
-    channel3Max = int(float(value["max"]) * 255)
+#     # Define thresholds for channel 3 based on histogram settings
+#     channel3Min = int(float(value["min"]) * 255)
+#     channel3Max = int(float(value["max"]) * 255)
 
-    imgObj = np.zeros_like(imgROI)
-    # imgHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
-    imgObj = cv2.inRange(
-        imgHSV, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
-    imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=2)
-    # cv2.imshow("imgObj HUE Range", imgObj)
-    contours, hierarchy = cv2.findContours(
-        imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    imgConvex = np.zeros_like(imgObj)
-    # height, width = imgObj.shape
-    # imgConvex = np.zeros((height, width, 1), np.uint8)
-    # if len(contours) != 0:
-        # find the biggest area of the contour
-    big_contour = max(contours, key=cv2.contourArea)
-        # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
-    cnt = cv2.convexHull(big_contour)
-    cv2.drawContours(imgConvex, [cnt], 0, 255, -1)
-    imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
-    # skeleton = thin(imgConvex)
-    # skeleton = skeletonize(imgConvex, method='lee')
-    # imgSkeleton = img_as_ubyte(skeleton)
-    imgSkeleton = skeleton(imgConvex)
-    return imgConvex, imgSkeleton
+#     imgObj = np.zeros_like(imgROI)
+#     # imgHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+#     imgObj = cv2.inRange(
+#         imgHSV, (channel1Min, channel2Min, channel3Min), (channel1Max, channel2Max, channel3Max))
+#     imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT,(5,5)), iterations=1)
+#     # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+#     # imgObj = cv2.GaussianBlur(imgObj,(3,3),0)
+#     # cv2.imshow("imgObj HUE Range", imgObj)
+#     contours, hierarchy = cv2.findContours(
+#         imgObj, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     imgContour = np.zeros_like(imgObj)
+#     imgConvex = np.zeros_like(imgObj)
+#     # height, width = imgObj.shape
+#     # imgConvex = np.zeros((height, width, 1), np.uint8)
+#     if len(contours) != 0:
+#         # find the biggest area of the contour
+#         big_contour = max(contours, key=cv2.contourArea)
+#         epsilon = 0.005*cv2.arcLength(big_contour, True)
+#         approx = cv2.approxPolyDP(big_contour, epsilon, True)
+#         # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+#         cnt = cv2.convexHull(big_contour)
+#         cv2.drawContours(imgContour, [approx], 0, 255, -1)
+#         cv2.drawContours(imgConvex, [cnt], 0, 255, -1)
+#         # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)    
+#     # skeleton = thin(imgConvex)
+#     # skeleton = skeletonize(imgConvex, method='lee')
+#     # imgSkeleton = img_as_ubyte(skeleton)
+    
+#     imgSkeleton = skeleton(imgConvex)
+#     return imgContour, imgSkeleton
 
 def shadow(imgROI, imgObj):
     imgShadow = np.zeros_like(imgObj)
@@ -187,9 +197,10 @@ def shadow(imgROI, imgObj):
         # find the biggest area of the contour
         big_contour = max(contours, key=cv2.contourArea)
         # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
-        cnt = cv2.convexHull(big_contour)
-        cv2.drawContours(imgContour, [cnt], 0, (255, 255, 255), -1)
+        # cnt = cv2.convexHull(big_contour)
+        cv2.drawContours(imgContour, [big_contour], 0, (255, 255, 255), -1)
 
+    cv2.GaussianBlur(imgContour,(5,5),0)
     # Contour filtering to get largest area
     # area_thresh = 0
     # for c in contours:
@@ -200,7 +211,7 @@ def shadow(imgROI, imgObj):
     # imgOut= np.zeros_like(imgObj)
     # if len(contours) != 0:
     #     # find the biggest area of the contour
-    #     big_contour = max(contours, key=cv2.contourArea)
+    #     big_contour = max(cochromentours, key=cv2.contourArea)
         
         # x, y, w, h = cv2.boundingRect(big_contour)
         # imgShadow = cv2.medianBlur(imgShadow, 9)
@@ -211,6 +222,57 @@ def shadow(imgROI, imgObj):
     imgExOr = cv2.bitwise_xor(imgContour, imgObj)
     return cv2.bitwise_and(imgContour, imgExOr)
 
+# def shadow(imageHSV):
+#     hChannel, sChannel, vChannel = imageHSV[:,:,0], imageHSV[:,:,1], imageHSV[:,:,2]
+#     mean,std = cv2.meanStdDev(vChannel) 
+#     vChannelThreshold = abs(mean + (std*0.3))[0][0]
+#     # print(vChannelThreshold)
+#     # ret, imgShadow = cv2.threshold(vChannel, vChannelThreshold, 255, cv2.THRESH_BINARY)
+#     imgShadow = cv2.inRange(
+#         imageHSV, (0, 0, 1), (360, 255, vChannelThreshold))
+#     # imgShadow = cv2.morphologyEx(imgShadow, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT,(5,5)), iterations=1)
+#     imgShadow = cv2.erode(imgShadow, cv2.getStructuringElement(cv2.MORPH_RECT,(5,5)))
+#     contours, hierarchy = cv2.findContours(
+#         imgShadow, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+#     imgContour = np.zeros_like(imgShadow)
+#     if len(contours) != 0:
+#         # find the biggest area of the contour
+#         big_contour = max(contours, key=cv2.contourArea)
+#         epsilon = 0.001*cv2.arcLength(big_contour, True)
+#         approx = cv2.approxPolyDP(big_contour, epsilon, True)
+#         cv2.drawContours(imgContour, [approx], 0, 255, -1)
+#         # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
+#     return imgContour
+
+def obj(imgHSV):
+    hChannel, sChannel, vChannel = imgHSV[:,:,0], imgHSV[:,:,1], imgHSV[:,:,2]
+    mean, std = cv2.meanStdDev(sChannel) 
+    # sChannelThreshold = abs(mean + (std*0.3))[0][0]
+    sChannelThreshold = mean[0][0]
+    # print(sChannelThreshold)
+    imgHSV = cv2.inRange(
+        imgHSV, (0, sChannelThreshold, 1), (360, 255, 255))
+    # cv2.imshow("obj Range", imgHSV)
+    # imgObj = cv2.bitwise_xor(imgHSV, imgShadow)
+    # imgObj = cv2.bitwise_and(imgObj, imgHSV)
+    # imgObj = cv2.erode(imgObj, cv2.getStructuringElement(cv2.MORPH_RECT,(5,5)))
+    imgObj = cv2.morphologyEx(imgHSV, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_RECT,(5,5)), iterations=1)
+    # cv2.imshow("obj XOR", imgObj)   
+    contours, hierarchy = cv2.findContours(
+        imgObj , cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    imgContour = np.zeros_like(imgObj)
+    imgConvex = np.zeros_like(imgObj)
+    if len(contours) != 0:
+        # find the biggest area of the contour
+        big_contour = max(contours, key=cv2.contourArea)
+        epsilon = 0.001*cv2.arcLength(big_contour, True)
+        approx = cv2.approxPolyDP(big_contour, epsilon, True)
+        # cv2.drawContours(imgObj, [big_contour], 0, (255, 255, 255), -1)
+        cnt = cv2.convexHull(big_contour)
+        cv2.drawContours(imgContour, [approx], 0, 255, -1)
+        cv2.drawContours(imgConvex, [cnt], 0, 255, -1)
+        # imgObj = cv2.morphologyEx(imgObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)  
+    return imgContour, imgConvex
 
 def OpeningObj(img):
     # Define thresholds for channel 1 based on histogram settings
@@ -350,3 +412,11 @@ def shadowEdgeOnObj(imgObjColor, imgHSV, hue, saturation, value):
     # imgShadowOnObj = cv2.dilate(imgShadowOnObj, np.ones((3, 3), np.uint8), iterations=1)
     # imgShadowOnObj = cv2.morphologyEx(imgShadowOnObj, cv2.MORPH_OPEN, np.ones((3, 3), np.uint8), iterations=1)
     return imgConvex
+
+def obj_shadow_skeleton(imgROI):
+    imageHSV = cv2.cvtColor(imgROI, cv2.COLOR_BGR2HSV_FULL)
+    # imageShadow = shadow(imageHSV)
+    imageObj, imageObjConvex = obj(imageHSV)
+    imageSkeleton = skeleton(imageObjConvex)
+    imageShadow = shadow(imgROI, imageObj)
+    return imageObj, imageShadow, imageSkeleton
