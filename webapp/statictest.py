@@ -23,7 +23,7 @@ with open('./config.json', 'r') as f:
     config = json.load(f)
 
 objReconstruct = reconstruct.reconstruct(1, config)
-imgBg = cv2.imread("./ref/background.jpg")
+imgBg = cv2.imread("./ref/backup/background.jpg")
 cv2.imshow("Background Image", imgBg)
 frame = cv2.imread("./imgraw.jpg")
 cv2.imshow("Input Image", frame)
@@ -145,15 +145,15 @@ cv2.imshow("Image Skeleton", imgSkeleton)
 # # imgShadowOnObj = process_imgShadowOnObj(imgObjColor)
 # # cv2.imshow("Image Shadow on Object", imgShadowOnObj)
 
-objReconstruct.reconstruct(frame, imgObj, imgSkeleton, imgShadow, posCrop)
-ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)
+# objReconstruct.reconstruct(frame, imgObj, imgSkeleton, imgShadow, posCrop)
+# ptCloud, volume, length = objReconstruct.reconstructVolume(0.05)
 
 # # objReconstruct.pointCloudChart_3d()
 
 end = time.time()
 print("processed time = ", (end - start), "s")
 
-objReconstruct.volumeChart(end - start)
+# objReconstruct.volumeChart(end - start)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()

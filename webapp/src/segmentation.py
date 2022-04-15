@@ -249,7 +249,7 @@ def obj(imgHSV):
     mean, std = cv2.meanStdDev(sChannel) 
     # sChannelThreshold = abs(mean + (std*0.3))[0][0]
     sChannelThreshold = mean[0][0]
-    # print(sChannelThreshold)
+    print(sChannelThreshold)
     imgHSV = cv2.inRange(
         imgHSV, (0, sChannelThreshold, 1), (360, 255, 255))
     # cv2.imshow("obj Range", imgHSV)
